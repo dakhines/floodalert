@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import AppShell from "../components/AppShell";
 import PasswordField from "../components/PasswordField";
-import { getCitiesForState, locationOptions } from "../data/locationOptions";
 import logo from "../img/logo.png";
+import { fetchLocations } from "../api/floodApi";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z0-9]+$/;
@@ -16,9 +16,35 @@ export default function SignUp() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [selectedState, setSelectedState] = useState(locationOptions[0].state);
     const [defaultLocation, setDefaultLocation] = useState("");
+    const [locations, setLocations] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(true);
+    const [locationsError, setLocationsError] = useState("");
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        async function loadLocations() {
+            try {
+                setLocationsLoading(true);
+                setLocationsError("");
+                const data = await fetchLocations(controller.signal);
+                setLocations(data);
+            } catch (err) {
+                if (err.name !== "AbortError") {
+                    setLocations([]);
+                    setLocationsError("Unable to load locations.");
+                }
+            } finally {
+                setLocationsLoading(false);
+            }
+        }
+
+        loadLocations();
+
+        return () => controller.abort();
+    }, []);
 
     if (user) {
         return <Navigate to="/home" replace />;
@@ -73,11 +99,6 @@ export default function SignUp() {
         }
     };
 
-    const handleStateChange = (nextState) => {
-        setSelectedState(nextState);
-        setDefaultLocation("");
-    };
-
     return (
         <AppShell className="flex flex-col justify-center">
             <div className="mx-auto w-full max-w-sm rounded-[2rem] bg-white p-6 text-center shadow-[0_0_0_1px_rgba(15,23,42,0.08)]">
@@ -113,28 +134,25 @@ export default function SignUp() {
                         inputClassName="rounded-l-lg px-3 py-2"
                     />
                     <select
-                        value={selectedState}
-                        onChange={(e) => handleStateChange(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500"
-                    >
-                        {locationOptions.map((option) => (
-                            <option key={option.state} value={option.state}>
-                                {option.state}
-                            </option>
-                        ))}
-                    </select>
-                    <select
                         value={defaultLocation}
                         onChange={(e) => setDefaultLocation(e.target.value)}
+                        disabled={locationsLoading}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500"
                     >
-                        <option value="">Select Default City</option>
-                        {getCitiesForState(selectedState).map((city) => (
-                            <option key={city} value={city}>
-                                {city}
+                        <option value="">
+                            {locationsLoading
+                                ? "Loading locations..."
+                                : "Select Default City"}
+                        </option>
+                        {locations.map((item) => (
+                            <option key={item.location} value={item.location}>
+                                {item.location}
                             </option>
                         ))}
                     </select>
+                    {locationsError && (
+                        <p className="text-xs text-red-500">{locationsError}</p>
+                    )}
 
                     <button
                         type="submit"

@@ -1,16 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import floodData from "../data/floodData.json";
 import { useAuth } from "../context/useAuth";
 import { useViewLocation } from "../context/useViewLocation";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
-import {
-    getCitiesForState,
-    getStateForCity,
-    locationOptions,
-} from "../data/locationOptions";
+import { fetchLocations } from "../api/floodApi";
 
 const statusStyles = {
     "Flood Confirmed": "bg-red-500 border-red-900/25 text-white",
@@ -22,9 +17,33 @@ export default function AllLocations() {
     const { user } = useAuth();
     const { viewingLocation, setViewingLocation } = useViewLocation();
     const activeViewingLocation = viewingLocation || user?.defaultLocation;
-    const [selectedState, setSelectedState] = useState(
-        getStateForCity(activeViewingLocation)
-    );
+    const [locations, setLocations] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(true);
+    const [locationsError, setLocationsError] = useState("");
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        async function loadLocations() {
+            try {
+                setLocationsLoading(true);
+                setLocationsError("");
+                const data = await fetchLocations(controller.signal);
+                setLocations(data);
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    setLocations([]);
+                    setLocationsError("Unable to load locations.");
+                }
+            } finally {
+                setLocationsLoading(false);
+            }
+        }
+
+        loadLocations();
+
+        return () => controller.abort();
+    }, []);
 
     const handleSelect = (location) => {
         setViewingLocation(location);
@@ -42,24 +61,32 @@ export default function AllLocations() {
                 </h1>
             </div>
 
-            <select
-                value={selectedState}
-                onChange={(event) => setSelectedState(event.target.value)}
-                className="mt-5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold outline-none focus:border-slate-400"
-            >
-                {locationOptions.map((option) => (
-                    <option key={option.state} value={option.state}>
-                        {option.state}
-                    </option>
-                ))}
-            </select>
+            <div className="mt-5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
+                All Locations
+            </div>
 
             <section className="mt-5 space-y-3">
-                {floodData
-                    .filter((item) =>
-                        getCitiesForState(selectedState).includes(item.location)
-                    )
-                    .map((item) => {
+                {locationsLoading && (
+                    <p className="rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-500">
+                        Loading locations...
+                    </p>
+                )}
+
+                {locationsError && (
+                    <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+                        {locationsError}
+                    </p>
+                )}
+
+                {!locationsLoading && !locationsError && locations.length === 0 && (
+                    <p className="rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-500">
+                        No locations available.
+                    </p>
+                )}
+
+                {!locationsLoading &&
+                    !locationsError &&
+                    locations.map((item) => {
                         const isViewing = item.location === activeViewingLocation;
                         const isDefault = item.location === user?.defaultLocation;
 

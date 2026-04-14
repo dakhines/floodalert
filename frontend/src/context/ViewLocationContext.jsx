@@ -1,5 +1,4 @@
 import { useState } from "react";
-import floodData from "../data/floodData.json";
 import { useAuth } from "./useAuth";
 import { ViewLocationContext } from "./ViewLocationContextValue";
 
@@ -21,11 +20,9 @@ export function ViewLocationProvider({ children }) {
         }
     });
 
-    const hasValidSavedLocation =
-        sessionSelection?.owner === user?.name &&
-        floodData.some((item) => item.location === sessionSelection?.location);
+    const hasSessionLocation = sessionSelection?.owner === user?.name;
 
-    const viewingLocation = hasValidSavedLocation
+    const viewingLocation = hasSessionLocation
         ? sessionSelection.location
         : user?.defaultLocation || "";
 
