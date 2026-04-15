@@ -1,4 +1,4 @@
-const mockLocations = require("../data/mockLocations");
+const mockLocations = require("../data/mockLocations.json");
 
 function getAllLocations() {
   return mockLocations;

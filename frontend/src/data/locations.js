@@ -1,0 +1,16 @@
+export const stateCityMap = {
+    Melaka: ["Bandar Melaka", "Ayer Keroh", "Alor Gajah", "Jasin", "Durian Tunggal"],
+    Johor: ["Johor Bahru", "Batu Pahat", "Kluang", "Muar", "Segamat"],
+    Selangor: ["Shah Alam", "Petaling Jaya", "Subang Jaya", "Klang", "Kajang"],
+    "Kuala Lumpur": ["Kuala Lumpur"],
+    "Negeri Sembilan": ["Seremban", "Port Dickson", "Nilai"],
+    Pahang: ["Kuantan", "Temerloh", "Bentong"],
+    Perak: ["Ipoh", "Taiping", "Teluk Intan"],
+    Penang: ["George Town", "Butterworth", "Bukit Mertajam"],
+    Kedah: ["Alor Setar", "Sungai Petani", "Kulim"],
+    Perlis: ["Kangar"],
+    Terengganu: ["Kuala Terengganu", "Kemaman", "Dungun"],
+    Kelantan: ["Kota Bharu", "Pasir Mas"],
+    Sabah: ["Kota Kinabalu", "Sandakan", "Tawau"],
+    Sarawak: ["Kuching", "Miri", "Sibu"],
+};

@@ -1,0 +1,68 @@
+[
+  {
+    "location": "Ayer Keroh",
+    "status": "Flood Confirmed",
+    "action": "Prepare to evacuate",
+    "reason": "Heavy rainfall and official warning detected",
+    "lastUpdate": "2026-04-14T06:30:00Z",
+    "latestUpdate": {
+      "type": "Evacuation",
+      "summary": "Temporary shelter opened nearby"
+    }
+  },
+  {
+    "location": "Johor Bahru",
+    "status": "Risk Rising",
+    "action": "Prepare essentials and monitor updates",
+    "reason": "Heavy rain warning issued",
+    "lastUpdate": "2026-04-14T05:15:00Z",
+    "latestUpdate": {
+      "type": "Warning",
+      "summary": "Continuous rain expected for next few hours"
+    }
+  },
+  {
+    "location": "Durian Tunggal",
+    "status": "Safe",
+    "action": "Normal activities",
+    "reason": "Clear skies, water levels normal",
+    "lastUpdate": "2026-04-14T07:00:00Z",
+    "latestUpdate": {
+      "type": "Info",
+      "summary": "No current weather threats detected"
+    }
+  },
+  {
+    "location": "Kuala Lumpur",
+    "status": "Warning",
+    "action": "Avoid low-lying areas and tunnels",
+    "reason": "Flash flood warning after sudden heavy downpour",
+    "lastUpdate": "2026-04-14T06:45:00Z",
+    "latestUpdate": {
+      "type": "Warning",
+      "summary": "Water levels rising in SMART tunnel drainage area"
+    }
+  },
+  {
+    "location": "Kuantan",
+    "status": "Flood Confirmed",
+    "action": "Evacuate immediately",
+    "reason": "River exceeded danger level by 1.5 meters",
+    "lastUpdate": "2026-04-14T04:30:00Z",
+    "latestUpdate": {
+      "type": "Critical",
+      "summary": "Rescue boats deployed to affected residential zones"
+    }
+  },
+  {
+    "location": "Bandar Melaka",
+    "status": "Risk Rising",
+    "action": "Move vehicles to higher ground",
+    "reason": "High tide combining with continuous upstream rain",
+    "lastUpdate": "2026-04-14T07:10:00Z",
+    "latestUpdate": {
+      "type": "Warning",
+      "summary": "Coastal areas on standby for potential overflow"
+    }
+  }
+]
