@@ -50,21 +50,21 @@ export default function Settings() {
                 <div className="mt-4 grid grid-cols-3 gap-2">
                     <Link
                         to="/settings/edit"
-                        className="rounded-lg border border-slate-300 px-2 py-2 text-center text-[11px] font-bold text-slate-950"
+                        className="rounded-lg border border-slate-300 px-2 py-2 text-center text-[11px] font-bold text-slate-950 hover:scale-102"
                     >
                         Edit Profile
                     </Link>
                     <button
                         type="button"
                         onClick={() => setModal("logout")}
-                        className="rounded-lg border border-slate-300 px-2 py-2 text-[11px] font-bold text-slate-950"
+                        className="rounded-lg border border-slate-300 px-2 py-2 text-[11px] font-bold text-slate-950 hover:scale-102"
                     >
                         Log out
                     </button>
                     <button
                         type="button"
                         onClick={() => setModal("delete")}
-                        className="rounded-lg border border-red-900/25 bg-red-500 px-2 py-2 text-[11px] font-bold text-white"
+                        className="rounded-lg border border-red-900/25 bg-red-500 px-2 py-2 text-[11px] font-bold text-white hover:scale-102"
                     >
                         Delete
                     </button>
@@ -93,7 +93,6 @@ export default function Settings() {
             {modal === "logout" && (
                 <ConfirmModal
                     title="Are you sure you want to Log out?"
-                    message="You can log in again with your username or email."
                     onConfirm={handleLogout}
                     onCancel={() => setModal(null)}
                 />
@@ -101,7 +100,6 @@ export default function Settings() {
             {modal === "delete" && (
                 <ConfirmModal
                     title="Are you sure you want to delete this account?"
-                    message="This removes the local account from this browser."
                     onConfirm={handleDelete}
                     onCancel={() => setModal(null)}
                 />

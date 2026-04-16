@@ -3,30 +3,30 @@
     "type": "Warning",
     "location": "Durian Tunggal",
     "summary": "Heavy rain and thunderstorms expected in the university area",
-    "timestamp": "2026-04-14T14:00:00Z"
+    "timestamp": "10:31 AM"
   },
   {
     "type": "Evacuation",
     "location": "Ayer Keroh",
     "summary": "Temporary relief center opened at local community hall",
-    "timestamp": "2026-04-14T14:30:00Z"
+    "timestamp": "3:41 PM"
   },
   {
     "type": "Warning",
     "location": "Alor Gajah",
     "summary": "Flash floods reported on main roads, please avoid traveling",
-    "timestamp": "2026-04-14T15:00:00Z"
+    "timestamp": "10:31 AM"
   },
   {
     "type": "Info",
     "location": "Bandar Melaka",
     "summary": "Water levels at Malacca River remain normal, monitoring ongoing",
-    "timestamp": "2026-04-14T15:15:00Z"
+    "timestamp": "10:31 AM"
   },
   {
     "type": "Warning",
     "location": "Jasin",
     "summary": "Strong winds warning issued by meteorological department",
-    "timestamp": "2026-04-14T15:20:00Z"
+    "timestamp": "10:31 AM"
   }
 ]

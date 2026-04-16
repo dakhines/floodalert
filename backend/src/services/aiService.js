@@ -22,7 +22,7 @@ function getModel() {
   });
 }
 
-async function analyzeLocation(rawData) {if (location.name.toLowerCase() === req.params.name.toLowerCase())
+async function analyzeLocation(rawData) {
   const model = getModel();
   const prompt = [
     "Analyze this raw flood data and produce the required JSON output.",

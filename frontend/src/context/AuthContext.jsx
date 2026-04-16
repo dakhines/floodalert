@@ -24,6 +24,8 @@ function normalizeUser(user) {
         email: user.email || "",
         password: user.password || "",
         defaultLocation,
+        defaultState: user.defaultState || user.state || "",
+        defaultDistrict: user.defaultDistrict || user.district || "",
         location: defaultLocation,
         profileImage: user.profileImage || "",
     };
@@ -162,6 +164,9 @@ export function AuthProvider({ children }) {
         currentPassword,
         code,
         profileImage,
+        defaultLocation,
+        defaultState,
+        defaultDistrict,
         removeProfileImage = false,
     }) => {
         if (!user) {
@@ -185,6 +190,9 @@ export function AuthProvider({ children }) {
         const users = getStoredUsers();
         const nextName = name?.trim() || user.name;
         const nextEmail = email?.trim() || user.email;
+        const nextDefaultLocation = defaultLocation?.trim() || user.defaultLocation;
+        const nextDefaultState = defaultState ?? user.defaultState;
+        const nextDefaultDistrict = defaultDistrict ?? user.defaultDistrict;
 
         if (
             nextName.toLowerCase() !== user.name.toLowerCase() &&
@@ -212,7 +220,10 @@ export function AuthProvider({ children }) {
             name: nextName,
             email: nextEmail,
             password: password || user.password,
-            location: user.defaultLocation,
+            defaultLocation: nextDefaultLocation,
+            defaultState: nextDefaultState,
+            defaultDistrict: nextDefaultDistrict,
+            location: nextDefaultLocation,
             profileImage: removeProfileImage
                 ? ""
                 : profileImage !== undefined

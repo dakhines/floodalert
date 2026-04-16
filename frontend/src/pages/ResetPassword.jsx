@@ -80,7 +80,7 @@ export default function ResetPassword() {
                     </button>
                     <Link
                         to="/login"
-                        className="block w-full rounded-full border border-slate-300 px-4 py-2 text-center text-sm font-bold text-slate-700"
+                        className="block w-full rounded-full border border-slate-300 px-4 py-2 text-center text-sm font-bold text-slate-700 hover:text-blue-500"
                     >
                         Cancel
                     </Link>

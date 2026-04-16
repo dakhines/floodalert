@@ -64,17 +64,17 @@ export default function LatestUpdates() {
         }))
         .filter((item) => !currentLocation || !item.location || item.location === currentLocation);
 
-    const focusedUpdate =
-        visibleUpdates.find((item) => item.location === currentLocation) ||
-        visibleUpdates[0];
+    //const focusedUpdate =
+    //    visibleUpdates.find((item) => item.location === currentLocation) ||
+    //    visibleUpdates[0];
 
     return (
         <AppShell className="pb-24">
-            <Link to="/home" className="text-sm font-bold text-slate-600">
-                Back
-            </Link>
+            {/*<h1 className="mt-3 text-2xl font-bold text-slate-950">*/}
+            {/*    Latest Updates*/}
+            {/*</h1>*/}
             <h1 className="mt-3 text-2xl font-bold text-slate-950">
-                {focusedUpdate?.location}
+                {currentLocation}
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
                 Updates for the currently viewed location.

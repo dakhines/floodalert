@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import AppShell from "../components/AppShell";
 import PasswordField from "../components/PasswordField";
 import logo from "../img/logo.png";
-import { fetchLocations } from "../api/floodApi";
+import { MALAYSIA_LOCATION_DATA } from "../data/locations";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z0-9]+$/;
@@ -16,35 +16,19 @@ export default function SignUp() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [defaultState, setDefaultState] = useState("");
+    const [defaultDistrict, setDefaultDistrict] = useState("");
     const [defaultLocation, setDefaultLocation] = useState("");
-    const [locations, setLocations] = useState([]);
-    const [locationsLoading, setLocationsLoading] = useState(true);
-    const [locationsError, setLocationsError] = useState("");
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        const controller = new AbortController();
-
-        async function loadLocations() {
-            try {
-                setLocationsLoading(true);
-                setLocationsError("");
-                const data = await fetchLocations(controller.signal);
-                setLocations(data);
-            } catch (err) {
-                if (err.name !== "AbortError") {
-                    setLocations([]);
-                    setLocationsError("Unable to load locations.");
-                }
-            } finally {
-                setLocationsLoading(false);
-            }
-        }
-
-        loadLocations();
-
-        return () => controller.abort();
-    }, []);
+    const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
+    const districts = defaultState
+        ? Object.keys(MALAYSIA_LOCATION_DATA[defaultState] || {})
+        : [];
+    const cities =
+        defaultState && defaultDistrict
+            ? MALAYSIA_LOCATION_DATA[defaultState]?.[defaultDistrict] || []
+            : [];
 
     if (user) {
         return <Navigate to="/home" replace />;
@@ -78,7 +62,7 @@ export default function SignUp() {
         }
 
         if (!defaultLocation) {
-            setError("Please choose a default location.");
+            setError("Please choose a default city or area.");
             return;
         }
 
@@ -89,6 +73,8 @@ export default function SignUp() {
             email: trimmedEmail,
             password: trimmedPassword,
             defaultLocation,
+            defaultState,
+            defaultDistrict,
         };
 
         try {
@@ -134,25 +120,50 @@ export default function SignUp() {
                         inputClassName="rounded-l-lg px-3 py-2"
                     />
                     <select
-                        value={defaultLocation}
-                        onChange={(e) => setDefaultLocation(e.target.value)}
-                        disabled={locationsLoading}
+                        value={defaultState}
+                        onChange={(e) => {
+                            setDefaultState(e.target.value);
+                            setDefaultDistrict("");
+                            setDefaultLocation("");
+                        }}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500"
                     >
-                        <option value="">
-                            {locationsLoading
-                                ? "Loading locations..."
-                                : "Select Default City"}
-                        </option>
-                        {locations.map((item) => (
-                            <option key={item.location} value={item.location}>
-                                {item.location}
+                        <option value="">Select State</option>
+                        {states.map((state) => (
+                            <option key={state} value={state}>
+                                {state}
                             </option>
                         ))}
                     </select>
-                    {locationsError && (
-                        <p className="text-xs text-red-500">{locationsError}</p>
-                    )}
+                    <select
+                        value={defaultDistrict}
+                        onChange={(e) => {
+                            setDefaultDistrict(e.target.value);
+                            setDefaultLocation("");
+                        }}
+                        disabled={!defaultState}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                        <option value="">Select District</option>
+                        {districts.map((district) => (
+                            <option key={district} value={district}>
+                                {district}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={defaultLocation}
+                        onChange={(e) => setDefaultLocation(e.target.value)}
+                        disabled={!defaultDistrict}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                        <option value="">Select City/Area</option>
+                        {cities.map((city) => (
+                            <option key={city} value={city}>
+                                {city}
+                            </option>
+                        ))}
+                    </select>
 
                     <button
                         type="submit"

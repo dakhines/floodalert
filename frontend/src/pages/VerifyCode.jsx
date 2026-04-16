@@ -73,7 +73,7 @@ export default function VerifyCode() {
                 </button>
                 <Link
                     to="/login"
-                    className="mt-2 block text-center text-[11px] font-semibold text-slate-500"
+                    className="mt-2 block text-center text-[11px] font-semibold text-slate-500 hover:text-blue-500"
                 >
                     Cancel
                 </Link>

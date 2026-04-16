@@ -52,7 +52,7 @@ export default function ChangePassword() {
         <AppShell className="pb-24">
             <Link
                 to="/verify-password-code"
-                className="text-sm font-bold text-slate-600"
+                className="text-sm font-bold text-slate-600 hover:text-blue-500"
             >
                 Back
             </Link>

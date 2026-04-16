@@ -24,6 +24,19 @@ export default function Login() {
         e.preventDefault();
         setError("");
 
+        const identifier = form.identifier.trim();
+        const password = form.password.trim();
+
+        if (!identifier) {
+            setError("Please enter your username.");
+            return;
+        }
+
+        if (!password) {
+            setError("Please enter your password.");
+            return;
+        }
+
         try {
             login(form);
             navigate("/home");

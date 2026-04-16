@@ -40,7 +40,7 @@ export default function ChangeUsername() {
 
     return (
         <AppShell className="pb-24">
-            <Link to="/settings/edit" className="text-sm font-bold text-slate-600">
+            <Link to="/settings/edit" className="text-sm font-bold text-slate-600 hover:text-blue-500">
                 Back
             </Link>
             <h1 className="mt-3 text-2xl font-bold text-slate-950">

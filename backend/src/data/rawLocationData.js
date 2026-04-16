@@ -15,7 +15,7 @@ const rawLocationData = [
       "Heavy rain warning issued in Melaka",
       "Low-lying roads reported flooded",
     ],
-    timestamp: "2026-04-15T10:00:00Z",
+        timestamp: "10:31 AM",
   },
   {
     city: "Johor Bahru",
@@ -33,7 +33,7 @@ const rawLocationData = [
       "River level increasing near residential areas",
       "Residents advised to monitor official updates",
     ],
-    timestamp: "2026-04-15T10:20:00Z",
+      timestamp: "10:31 AM",
   },
   {
     city: "Shah Alam",
@@ -48,7 +48,7 @@ const rawLocationData = [
       risk: "low",
     },
     alerts: [],
-    timestamp: "2026-04-15T09:45:00Z",
+      timestamp: "10:31 AM",
   },
   {
     city: "Kuantan",
@@ -66,7 +66,7 @@ const rawLocationData = [
       "Flood confirmed near riverbank communities",
       "Several routes temporarily closed",
     ],
-    timestamp: "2026-04-15T10:35:00Z",
+      timestamp: "10:31 AM",
   },
   {
     city: "Kota Bharu",
@@ -84,7 +84,7 @@ const rawLocationData = [
       "Evacuation notice issued for high-risk zones",
       "Temporary relief centre opened nearby",
     ],
-    timestamp: "2026-04-15T10:50:00Z",
+      timestamp: "10:31 AM",
   },
   {
     city: "George Town",
@@ -96,7 +96,7 @@ const rawLocationData = [
     },
     waterLevel: null,
     alerts: ["Drainage monitoring ongoing after earlier rainfall"],
-    timestamp: "2026-04-15T09:30:00Z",
+      timestamp: "10:31 AM",
   },
 ];
 

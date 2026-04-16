@@ -5,7 +5,7 @@ import { useViewLocation } from "../context/useViewLocation";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import { fetchLocations } from "../api/floodApi";
-import { stateCityMap } from "../data/locations";
+import { MALAYSIA_LOCATION_DATA } from "../data/locations";
 
 const statusStyles = {
     "Evacuate": "bg-red-900 border-red-900/25 text-white",
@@ -23,7 +23,9 @@ export default function AllLocations() {
     const navigate = useNavigate();
     const {
         currentViewedLocation,
+        selectedDistrict,
         selectedState,
+        setSelectedDistrict,
         setSelectedState,
         setViewingLocation,
     } = useViewLocation();
@@ -55,7 +57,7 @@ export default function AllLocations() {
         return () => controller.abort();
     }, []);
 
-    const states = useMemo(() => Object.keys(stateCityMap), []);
+    const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
     const statusByCity = useMemo(
         () =>
             new Map(
@@ -64,19 +66,21 @@ export default function AllLocations() {
         [locations]
     );
 
-    useEffect(() => {
-        if (states.length > 0 && !states.includes(selectedState)) {
-            setSelectedState(states[0]);
-        }
-    }, [selectedState, setSelectedState, states]);
+    const districts = selectedState
+        ? Object.keys(MALAYSIA_LOCATION_DATA[selectedState] || {})
+        : [];
 
-    const cities = selectedState ? stateCityMap[selectedState] || [] : [];
+    const cities =
+        selectedState && selectedDistrict
+            ? MALAYSIA_LOCATION_DATA[selectedState]?.[selectedDistrict] || []
+            : [];
 
     const handleSelect = (city) => {
         setViewingLocation({
             city,
             location: city,
             state: selectedState,
+            district: selectedDistrict,
         });
         navigate("/home");
     };
@@ -84,9 +88,6 @@ export default function AllLocations() {
     return (
         <AppShell className="pb-24">
             <div>
-                <Link to="/home" className="text-sm font-bold text-slate-600">
-                    Back
-                </Link>
                 <h1 className="mt-3 text-2xl font-bold text-slate-950">
                     Location
                 </h1>
@@ -97,14 +98,33 @@ export default function AllLocations() {
             </label>
             <select
                 value={selectedState}
-                onChange={(event) => setSelectedState(event.target.value)}
-                disabled={locationsLoading || states.length === 0}
-                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400"
+                onChange={(event) => {
+                    setSelectedState(event.target.value);
+                    setSelectedDistrict("");
+                }}
+                disabled={states.length === 0}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400 hover:border-sky-300"
             >
                 <option value="">Select State</option>
                 {states.map((state) => (
                     <option key={state} value={state}>
                         {state}
+                    </option>
+                ))}
+            </select>
+            <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                District
+            </label>
+            <select
+                value={selectedDistrict}
+                onChange={(event) => setSelectedDistrict(event.target.value)}
+                disabled={!selectedState}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400 hover:border-sky-300"
+            >
+                <option value="">Select District</option>
+                {districts.map((district) => (
+                    <option key={district} value={district}>
+                        {district}
                     </option>
                 ))}
             </select>
@@ -124,7 +144,9 @@ export default function AllLocations() {
 
                 {!locationsLoading && !locationsError && cities.length === 0 && (
                     <p className="rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-500">
-                        No locations available.
+                        {selectedDistrict
+                            ? "No locations available."
+                            : "Select a district to view city and area statuses."}
                     </p>
                 )}
 
@@ -135,7 +157,8 @@ export default function AllLocations() {
                         const isViewingNow =
                             (currentViewedLocation?.city === city ||
                                 currentViewedLocation?.location === city) &&
-                            currentViewedLocation?.state === selectedState;
+                            currentViewedLocation?.state === selectedState &&
+                            currentViewedLocation?.district === selectedDistrict;
 
                         return (
                             <article

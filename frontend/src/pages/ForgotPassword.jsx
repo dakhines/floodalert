@@ -96,7 +96,7 @@ export default function ForgotPassword() {
 
                 <Link
                     to="/login"
-                    className="mt-3 block text-[11px] font-semibold text-slate-500"
+                    className="mt-3 block text-[11px] font-semibold text-slate-500 hover:text-blue-500"
                 >
                     Back to login
                 </Link>
