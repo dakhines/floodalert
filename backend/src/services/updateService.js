@@ -1,4 +1,4 @@
-const mockUpdates = require("../data/mockUpdates");
+const mockUpdates = require("../data/mockUpdates.json");
 
 function getAllUpdates() {
   return mockUpdates;

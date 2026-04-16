@@ -1,22 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { useAuth } from "../context/useAuth";
 import { useViewLocation } from "../context/useViewLocation";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import { fetchLocations } from "../api/floodApi";
+import { stateCityMap } from "../data/locations";
 
 const statusStyles = {
+    "Evacuate": "bg-red-900 border-red-900/25 text-white",
     "Flood Confirmed": "bg-red-500 border-red-900/25 text-white",
+    "Warning": "bg-orange-500 border-orange-900/25 text-white",
     "Risk Rising": "bg-amber-500 border-amber-900/25 text-white",
+    "Safe": "bg-green-600 border-green-900/25 text-white",
 };
+
+function getCityName(item) {
+    return item.city || item.location || item.name || "Unknown City";
+}
 
 export default function AllLocations() {
     const navigate = useNavigate();
-    const { user } = useAuth();
-    const { viewingLocation, setViewingLocation } = useViewLocation();
-    const activeViewingLocation = viewingLocation || user?.defaultLocation;
+    const {
+        currentViewedLocation,
+        selectedState,
+        setSelectedState,
+        setViewingLocation,
+    } = useViewLocation();
     const [locations, setLocations] = useState([]);
     const [locationsLoading, setLocationsLoading] = useState(true);
     const [locationsError, setLocationsError] = useState("");
@@ -45,8 +55,29 @@ export default function AllLocations() {
         return () => controller.abort();
     }, []);
 
-    const handleSelect = (location) => {
-        setViewingLocation(location);
+    const states = useMemo(() => Object.keys(stateCityMap), []);
+    const statusByCity = useMemo(
+        () =>
+            new Map(
+                locations.map((item) => [getCityName(item), item])
+            ),
+        [locations]
+    );
+
+    useEffect(() => {
+        if (states.length > 0 && !states.includes(selectedState)) {
+            setSelectedState(states[0]);
+        }
+    }, [selectedState, setSelectedState, states]);
+
+    const cities = selectedState ? stateCityMap[selectedState] || [] : [];
+
+    const handleSelect = (city) => {
+        setViewingLocation({
+            city,
+            location: city,
+            state: selectedState,
+        });
         navigate("/home");
     };
 
@@ -61,9 +92,22 @@ export default function AllLocations() {
                 </h1>
             </div>
 
-            <div className="mt-5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">
-                All Locations
-            </div>
+            <label className="mt-5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                State
+            </label>
+            <select
+                value={selectedState}
+                onChange={(event) => setSelectedState(event.target.value)}
+                disabled={locationsLoading || states.length === 0}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100 disabled:text-slate-400"
+            >
+                <option value="">Select State</option>
+                {states.map((state) => (
+                    <option key={state} value={state}>
+                        {state}
+                    </option>
+                ))}
+            </select>
 
             <section className="mt-5 space-y-3">
                 {locationsLoading && (
@@ -78,7 +122,7 @@ export default function AllLocations() {
                     </p>
                 )}
 
-                {!locationsLoading && !locationsError && locations.length === 0 && (
+                {!locationsLoading && !locationsError && cities.length === 0 && (
                     <p className="rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-500">
                         No locations available.
                     </p>
@@ -86,58 +130,56 @@ export default function AllLocations() {
 
                 {!locationsLoading &&
                     !locationsError &&
-                    locations.map((item) => {
-                        const isViewing = item.location === activeViewingLocation;
-                        const isDefault = item.location === user?.defaultLocation;
+                    cities.map((city) => {
+                        const item = statusByCity.get(city);
+                        const isViewingNow =
+                            (currentViewedLocation?.city === city ||
+                                currentViewedLocation?.location === city) &&
+                            currentViewedLocation?.state === selectedState;
 
                         return (
-                            <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => handleSelect(item.location)}
-                                className={`w-full cursor-pointer rounded-xl border px-4 py-3 text-left transition duration-200 ${
-                                    isViewing
-                                        ? "border-sky-400 bg-sky-50 shadow-sm"
-                                        : "border-slate-300 bg-white hover:border-sky-300 hover:bg-sky-50/40 hover:shadow-sm active:scale-[0.99]"
+                            <article
+                                key={city}
+                                className={`w-full rounded-xl border px-4 py-3 text-left shadow-sm transition duration-200 hover:border-sky-300 hover:bg-sky-50/40 ${
+                                    isViewingNow
+                                        ? "border-sky-400 bg-sky-50"
+                                        : "border-slate-300 bg-white"
                                 }`}
                             >
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="min-w-0 flex-1">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <h2 className="text-sm font-bold text-slate-950">
-                                                {item.location}
-                                            </h2>
-                                            {isDefault && (
-                                                <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
-                                                    Default
-                                                </span>
-                                            )}
-                                            {isViewing && (
-                                                <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-bold text-sky-700">
-                                                    Viewing now
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {item.reason}
-                                        </p>
+                                        <h2 className="truncate text-sm font-bold text-slate-950">
+                                            {city}
+                                        </h2>
+                                        {isViewingNow && (
+                                            <p className="mt-1 text-[11px] font-bold text-sky-700">
+                                                Viewing now
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex shrink-0 items-center gap-3">
                                         <span
                                             className={`rounded-full border px-3 py-1 text-[11px] font-bold ${
-                                                statusStyles[item.status] ||
+                                                statusStyles[item?.status] ||
                                                 "bg-white text-slate-700 border-slate-300"
                                             }`}
                                         >
-                                            {item.status}
+                                            {item?.status || "No Alert"}
                                         </span>
-                                        <ChevronRight
-                                            size={20}
-                                            className="shrink-0 text-slate-400"
-                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelect(city)}
+                                            aria-label={`View ${city} on Home`}
+                                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                                        >
+                                            <ChevronRight
+                                                size={20}
+                                                className="shrink-0"
+                                            />
+                                        </button>
                                     </div>
                                 </div>
-                            </button>
+                            </article>
                         );
                     })}
             </section>
