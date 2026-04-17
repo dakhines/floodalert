@@ -130,13 +130,31 @@ export const MALAYSIA_LOCATION_DATA = {
     "Perlis": {
         "Perlis": ["Kangar", "Arau", "Padang Besar", "Kuala Perlis", "Chuping", "Simpang Empat"]
     },
-    "Kuala Lumpur": {
+    "Wilayah Persekutuan Kuala Lumpur": {
         "Kuala Lumpur": ["Bukit Bintang", "Titiwangsa", "Setiawangsa", "Wangsa Maju", "Batu", "Kepong", "Segambut", "Lembah Pantai", "Seputeh", "Bandar Tun Razak", "Cheras"]
     },
-    "Putrajaya": {
+    "Wilayah Persekutuan Putrajaya": {
         "Putrajaya": ["Precinct 1", "Precinct 5", "Precinct 11", "Precinct 15", "Precinct 18", "Precinct 20"]
     },
-    "Labuan": {
+    "Wilayah Persekutuan Labuan": {
         "Labuan": ["Victoria", "Layang-Layangan", "Kampung Jawa"]
     }
 };
+
+export function findLocationPath(cityOrArea) {
+    const target = String(cityOrArea || "").trim().toLowerCase();
+
+    if (!target) {
+        return null;
+    }
+
+    for (const [state, districts] of Object.entries(MALAYSIA_LOCATION_DATA)) {
+        for (const [district, cities] of Object.entries(districts)) {
+            if (cities.some((city) => city.trim().toLowerCase() === target)) {
+                return { state, district, city: cityOrArea };
+            }
+        }
+    }
+
+    return null;
+}

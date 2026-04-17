@@ -3,29 +3,67 @@ import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import OTPInput from "../components/OTPInput";
+import { sendEmailCode, verifyEmailCode } from "../api/authApi";
+import { useAuth } from "../context/useAuth";
+import useResendCooldown from "../hooks/useResendCooldown";
 
 export default function VerifyPasswordCode() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [code, setCode] = useState("");
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(
+        "Send a verification code to your email before changing password."
+    );
     const [error, setError] = useState("");
+    const [isSending, setIsSending] = useState(false);
+    const { cooldownSeconds, isCoolingDown, startCooldown } =
+        useResendCooldown(30);
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
-
-        // TODO: Verify code with backend before allowing password reset.
-        if (code !== "1234") {
-            setError("Invalid verification code.");
+    const handleSendCode = async () => {
+        if (isSending || isCoolingDown) {
             return;
         }
 
-        sessionStorage.setItem("password-change-verified", "true");
-        navigate("/change-password");
+        try {
+            setIsSending(true);
+            await sendEmailCode({
+                email: user?.email,
+                purpose: "change-password",
+            });
+            setError("");
+            setMessage("Verification code sent to your email.");
+            startCooldown();
+        } catch (err) {
+            setMessage("");
+            setError(err.message);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        try {
+            const result = await verifyEmailCode({
+                email: user?.email,
+                purpose: "change-password",
+                code,
+            });
+            sessionStorage.setItem(
+                "password-change-token",
+                result.verificationToken || ""
+            );
+            sessionStorage.setItem("password-change-verified", "true");
+            navigate("/change-password");
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     return (
         <AppShell className="pb-24">
-            <Link to="/settings/edit" className="text-sm font-bold text-slate-600 hover:text-blue-500">
+            <Link replace to="/settings/edit" className="text-sm font-bold text-slate-600 hover:text-blue-500">
                 Back
             </Link>
             <h1 className="mt-3 text-2xl font-bold text-slate-950">
@@ -43,6 +81,19 @@ export default function VerifyPasswordCode() {
                 </p>
             )}
 
+            <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={isSending || isCoolingDown}
+                className="mt-5 w-full rounded-xl border border-slate-950 p-3 text-sm font-bold text-slate-950"
+            >
+                {isSending
+                    ? "Sending..."
+                    : isCoolingDown
+                      ? `Send again in ${cooldownSeconds}s`
+                      : "Send verification code"}
+            </button>
+
             <form
                 onSubmit={handleSubmit}
                 className="mx-auto mt-5 flex max-w-xs flex-col items-center space-y-3"
@@ -57,14 +108,11 @@ export default function VerifyPasswordCode() {
             </form>
             <button
                 type="button"
-                onClick={() => {
-                    // TODO: Send verification code through backend email service.
-                    setError("");
-                    setMessage("Verification code sent again: 1234");
-                }}
+                onClick={handleSendCode}
+                disabled={isSending || isCoolingDown}
                 className="mt-3 block w-full text-center text-xs font-semibold text-gray-500"
             >
-                Send again
+                {isCoolingDown ? `Send again in ${cooldownSeconds}s` : "Send again"}
             </button>
 
             <BottomNav />

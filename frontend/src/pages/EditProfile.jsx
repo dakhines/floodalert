@@ -1,14 +1,18 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import ProfileImageUploader from "../components/ProfileImageUploader";
 import SettingsOptionCard from "../components/SettingsOptionCard";
 import { useAuth } from "../context/useAuth";
+import { useViewLocation } from "../context/useViewLocation";
 import { MALAYSIA_LOCATION_DATA } from "../data/locations";
 
 export default function EditProfile() {
     const { user, updateProfile } = useAuth();
+    const { clearViewingLocation } = useViewLocation();
+    const navigate = useNavigate();
     const [defaultState, setDefaultState] = useState(user?.defaultState || "");
     const [defaultDistrict, setDefaultDistrict] = useState(
         user?.defaultDistrict || ""
@@ -17,6 +21,7 @@ export default function EditProfile() {
         user?.defaultLocation || ""
     );
     const [locationMessage, setLocationMessage] = useState("");
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
 
     const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
     const districts = defaultState
@@ -27,8 +32,8 @@ export default function EditProfile() {
             ? MALAYSIA_LOCATION_DATA[defaultState]?.[defaultDistrict] || []
             : [];
 
-    const handleSavePhoto = ({ profileImage, removeProfileImage }) => {
-        updateProfile({
+    const handleSavePhoto = async ({ profileImage, removeProfileImage }) => {
+        await updateProfile({
             name: user?.name,
             email: user?.email,
             profileImage,
@@ -36,25 +41,47 @@ export default function EditProfile() {
         });
     };
 
-    const handleSaveLocation = () => {
+    const handleSaveLocation = async () => {
         if (!defaultLocation) {
             setLocationMessage("Please select a city or area.");
             return;
         }
 
-        updateProfile({
-            name: user?.name,
-            email: user?.email,
-            defaultLocation,
-            defaultState,
-            defaultDistrict,
-        });
-        setLocationMessage("Default location updated.");
+        try {
+            setIsSavingLocation(true);
+            await updateProfile({
+                name: user?.name,
+                email: user?.email,
+                state: defaultState,
+                defaultLocation,
+                defaultState,
+                defaultDistrict,
+            });
+            clearViewingLocation();
+            setLocationMessage("Default location updated.");
+        } catch (error) {
+            setLocationMessage(error.message || "Unable to update location.");
+        } finally {
+            setIsSavingLocation(false);
+        }
+    };
+
+    const handleBack = () => {
+        navigate("/settings");
     };
 
     return (
         <AppShell className="pb-24">
-            <h1 className="mt-3 text-2xl font-bold text-slate-950">
+            <button
+                type="button"
+                onClick={handleBack}
+                className="mt-2 inline-flex items-center gap-2 rounded-full px-1 py-2 text-sm font-bold text-slate-600 transition hover:text-sky-600"
+            >
+                <ArrowLeft size={18} />
+                Back
+            </button>
+
+            <h1 className="mt-1 text-2xl font-bold text-slate-950">
                 Edit Profile
             </h1>
 
@@ -146,9 +173,10 @@ export default function EditProfile() {
                     <button
                         type="button"
                         onClick={handleSaveLocation}
+                        disabled={isSavingLocation}
                         className="w-full rounded-full border border-slate-950 px-4 py-2 text-sm font-bold text-slate-950 transition duration-200 ease-in-out hover:scale-103 hover:bg-slate-800 hover:text-white"
                     >
-                        Save Default Location
+                        {isSavingLocation ? "Saving..." : "Save Default Location"}
                     </button>
                 </div>
             </section>

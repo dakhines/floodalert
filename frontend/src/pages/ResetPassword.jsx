@@ -12,9 +12,13 @@ export default function ResetPassword() {
         password: "",
         confirmPassword: "",
     });
-    const [error, setError] = useState("");
+    const [error, setError] = useState(() =>
+        sessionStorage.getItem("reset-token")
+            ? ""
+            : "Verify your email code first."
+    );
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (form.password !== form.confirmPassword) {
@@ -22,13 +26,19 @@ export default function ResetPassword() {
             return;
         }
 
+        if (!sessionStorage.getItem("reset-token")) {
+            setError("Verify your email code first.");
+            return;
+        }
+
         try {
-            resetPassword({
+            await resetPassword({
                 email: sessionStorage.getItem("reset-email") || "",
                 password: form.password,
+                verificationToken: sessionStorage.getItem("reset-token") || "",
             });
             sessionStorage.removeItem("reset-email");
-            sessionStorage.removeItem("reset-code");
+            sessionStorage.removeItem("reset-token");
             navigate("/login");
         } catch (err) {
             setError(err.message);
@@ -53,21 +63,23 @@ export default function ResetPassword() {
                     <PasswordField
                         placeholder="New Password"
                         value={form.password}
-                        onChange={(event) =>
-                            setForm({ ...form, password: event.target.value })
-                        }
+                        onChange={(event) => {
+                            setForm({ ...form, password: event.target.value });
+                            setError("");
+                        }}
                         className="rounded-lg focus-within:border-sky-500"
                         inputClassName="rounded-l-lg px-3 py-2"
                     />
                     <PasswordField
                         placeholder="Confirm Password"
                         value={form.confirmPassword}
-                        onChange={(event) =>
+                        onChange={(event) => {
                             setForm({
                                 ...form,
                                 confirmPassword: event.target.value,
-                            })
-                        }
+                            });
+                            setError("");
+                        }}
                         className="rounded-lg focus-within:border-sky-500"
                         inputClassName="rounded-l-lg px-3 py-2"
                     />

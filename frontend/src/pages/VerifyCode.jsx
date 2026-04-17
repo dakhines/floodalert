@@ -3,32 +3,60 @@ import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import logo from "../img/logo.png";
 import OTPInput from "../components/OTPInput";
+import { sendEmailCode, verifyEmailCode } from "../api/authApi";
+import useResendCooldown from "../hooks/useResendCooldown";
 
 export default function VerifyCode() {
     const navigate = useNavigate();
     const [code, setCode] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [isSending, setIsSending] = useState(false);
+    const { cooldownSeconds, isCoolingDown, startCooldown } =
+        useResendCooldown(30, 30);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+        const email = sessionStorage.getItem("reset-email") || "";
 
-        const savedCode = sessionStorage.getItem("reset-code") || "1234";
+        try {
+            const result = await verifyEmailCode({
+                email,
+                purpose: "reset-password",
+                code,
+            });
+            sessionStorage.setItem(
+                "reset-token",
+                result.verificationToken || ""
+            );
+            navigate("/reset-password");
+        } catch (err) {
+            setError(err.message);
+        }
+    };
 
-        // TODO: Verify code with backend instead of sessionStorage mock state.
-        if (code !== savedCode) {
-            setError("Verification code is incorrect.");
+    const handleSendAgain = async () => {
+        if (isSending || isCoolingDown) {
             return;
         }
 
-        navigate("/reset-password");
-    };
+        const email = sessionStorage.getItem("reset-email") || "";
 
-    const handleSendAgain = () => {
-        // TODO: Send verification code through backend email service.
-        sessionStorage.setItem("reset-code", "1234");
-        setError("");
-        setMessage("Code sent again. Use 1234 for this prototype.");
+        try {
+            setIsSending(true);
+            await sendEmailCode({
+                email,
+                purpose: "reset-password",
+            });
+            setError("");
+            setMessage("Code sent again.");
+            startCooldown();
+        } catch (err) {
+            setMessage("");
+            setError(err.message);
+        } finally {
+            setIsSending(false);
+        }
     };
 
     return (
@@ -67,9 +95,14 @@ export default function VerifyCode() {
                 <button
                     type="button"
                     onClick={handleSendAgain}
+                    disabled={isSending || isCoolingDown}
                     className="mt-3 block w-full text-center text-[11px] font-semibold text-slate-500"
                 >
-                    Don&apos;t receive the code? Send again
+                    {isSending
+                        ? "Sending..."
+                        : isCoolingDown
+                          ? `Send again in ${cooldownSeconds}s`
+                          : "Don't receive the code? Send again"}
                 </button>
                 <Link
                     to="/login"

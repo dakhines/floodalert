@@ -1,12 +1,10 @@
+import { getStatusClasses } from "../utils/floodStatus";
+
 export default function FloodCard({ item }) {
-    const statusBoxStyle =
-    // colour for status at home
-        item.status === "Flood Confirmed"
-            ? "bg-red-500 border-red-900"
-            : "bg-amber-500 border-amber-900";
+    const statusBoxStyle = getStatusClasses(item.status);
 
     return (
-        <section className="rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
+        <section className="soft-pop rounded-2xl border border-slate-300 bg-white p-4 shadow-sm">
             <div className="mt-2 flex items-start justify-between gap-3">
                 <h2 className="text-xl font-bold text-slate-950">{item.location}</h2>
             </div>

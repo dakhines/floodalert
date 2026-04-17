@@ -2,14 +2,33 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
+import { submitReport } from "../api/reportApi";
+import { useAuth } from "../context/useAuth";
+
+const problemOptions = [
+    { value: "wrong-flood-status", label: "Wrong flood status" },
+    { value: "missing-location", label: "Location not found" },
+    { value: "outdated-update", label: "Missing or outdated update" },
+    { value: "slow-loading", label: "App loading too slowly" },
+    { value: "login-signup", label: "Login or sign up issue" },
+    { value: "password-reset", label: "Password reset issue" },
+    { value: "profile-settings", label: "Profile or settings issue" },
+    { value: "location-selection", label: "Location selection issue" },
+    { value: "display-layout", label: "Display or layout issue" },
+    { value: "notification", label: "Updates or notification issue" },
+    { value: "other", label: "Other" },
+];
 
 export default function ReportProblem() {
+    const { user } = useAuth();
     const [problemType, setProblemType] = useState("");
+    const [otherProblem, setOtherProblem] = useState("");
     const [explanation, setExplanation] = useState("");
     const [sent, setSent] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileName, setFileName] = useState("");
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
 
     const validate = () => {
@@ -21,6 +40,10 @@ export default function ReportProblem() {
 
         if (!explanation.trim()) {
             nextErrors.explanation = "Please enter an explanation.";
+        }
+
+        if (problemType === "other" && !otherProblem.trim()) {
+            nextErrors.otherProblem = "Please describe the problem.";
         }
 
         setErrors(nextErrors);
@@ -56,12 +79,12 @@ export default function ReportProblem() {
 
             {sent && (
                 <p className="mt-4 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-sky-700">
-                    Report saved locally for this prototype.
+                    Report submitted. Thank you for helping improve FloodAlert.
                 </p>
             )}
 
             <form
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                     event.preventDefault();
 
                     if (!validate()) {
@@ -69,8 +92,31 @@ export default function ReportProblem() {
                         return;
                     }
 
-                    // TODO: Submit report payload and image to backend API.
-                    setSent(true);
+                    try {
+                        setIsSubmitting(true);
+                        await submitReport({
+                            problemType,
+                            otherProblem,
+                            explanation,
+                            imageName: selectedFile?.name || "",
+                            reporterEmail: user?.email || "",
+                            reporterName: user?.name || "",
+                        });
+                        setSent(true);
+                        setProblemType("");
+                        setOtherProblem("");
+                        setExplanation("");
+                        handleRemoveFile();
+                    } catch (error) {
+                        setSent(false);
+                        setErrors({
+                            submit:
+                                error.message ||
+                                "Unable to submit report.",
+                        });
+                    } finally {
+                        setIsSubmitting(false);
+                    }
                 }}
                 className="mt-5 space-y-3"
             >
@@ -86,16 +132,28 @@ export default function ReportProblem() {
                     className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-sky-500"
                 >
                     <option value="">Select the problem</option>
-                    <option value="wrong-status">Wrong flood status</option>
-                    <option value="login">Login issue</option>
-                    <option value="updates">Missing update</option>
-                    <option value="other">Other</option>
+                    {problemOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
                 </select>
                 {problemType === "other" && (
                     <input
                         placeholder="Other"
+                        value={otherProblem}
+                        onChange={(event) => {
+                            setOtherProblem(event.target.value);
+                            setErrors((currentErrors) => ({
+                                ...currentErrors,
+                                otherProblem: "",
+                            }));
+                        }}
                         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-sky-500"
                     />
+                )}
+                {errors.otherProblem && (
+                    <p className="text-sm text-red-500">{errors.otherProblem}</p>
                 )}
                 {errors.problemType && (
                     <p className="text-sm text-red-500">{errors.problemType}</p>
@@ -115,6 +173,9 @@ export default function ReportProblem() {
                 />
                 {errors.explanation && (
                     <p className="text-sm text-red-500">{errors.explanation}</p>
+                )}
+                {errors.submit && (
+                    <p className="text-sm text-red-500">{errors.submit}</p>
                 )}
                 <div className="mt-3">
                     <div className="flex items-start gap-4">
@@ -151,9 +212,10 @@ export default function ReportProblem() {
                 </div>
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="rounded-full border border-slate-950 px-5 py-2 text-sm font-bold text-slate-950"
                 >
-                    Submit
+                    {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
             </form>
 

@@ -16,8 +16,8 @@ export default function Settings() {
         navigate("/login");
     };
 
-    const handleDelete = () => {
-        deleteAccount();
+    const handleDelete = async () => {
+        await deleteAccount();
         navigate("/");
     };
 

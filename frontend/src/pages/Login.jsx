@@ -5,6 +5,8 @@ import AppShell from "../components/AppShell";
 import PasswordField from "../components/PasswordField";
 import logo from "../img/logo.png";
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function Login() {
     const { login, user } = useAuth();
     const navigate = useNavigate();
@@ -20,7 +22,7 @@ export default function Login() {
         return <Navigate to="/home" replace />;
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
@@ -28,7 +30,7 @@ export default function Login() {
         const password = form.password.trim();
 
         if (!identifier) {
-            setError("Please enter your username.");
+            setError("Please enter your username/email.");
             return;
         }
 
@@ -37,8 +39,13 @@ export default function Login() {
             return;
         }
 
+        if (identifier.includes("@") && !emailPattern.test(identifier)) {
+            setError("Invalid email format.");
+            return;
+        }
+
         try {
-            login(form);
+            await login(form);
             navigate("/home");
         } catch (err) {
             setError(err.message);

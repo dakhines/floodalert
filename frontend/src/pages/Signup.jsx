@@ -20,6 +20,7 @@ export default function SignUp() {
     const [defaultDistrict, setDefaultDistrict] = useState("");
     const [defaultLocation, setDefaultLocation] = useState("");
     const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
     const districts = defaultState
@@ -34,8 +35,11 @@ export default function SignUp() {
         return <Navigate to="/home" replace />;
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isSubmitting) {
+            return;
+        }
 
         const trimmedName = name.trim();
         const trimmedEmail = email.trim();
@@ -72,16 +76,21 @@ export default function SignUp() {
             name: trimmedName,
             email: trimmedEmail,
             password: trimmedPassword,
+            state: defaultState,
             defaultLocation,
             defaultState,
             defaultDistrict,
         };
 
         try {
-            signup(newUser);
-            navigate("/home");
+            setIsSubmitting(true);
+            await signup(newUser);
+            sessionStorage.setItem("signup-email", trimmedEmail);
+            navigate("/verify-signup-code");
         } catch (err) {
             setError(err.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -167,11 +176,13 @@ export default function SignUp() {
 
                     <button
                         type="submit"
+                        disabled={isSubmitting}
                         className="w-full rounded-full border border-slate-950 px-4 py-2 text-sm font-bold text-slate-950
                                    transition duration-200 ease-in-out
-                                    hover:bg-slate-800 hover:scale-105 hover:text-white"
+                                    hover:bg-slate-800 hover:scale-105 hover:text-white
+                                    disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                     >
-                        Confirm
+                        {isSubmitting ? "Sending..." : "Confirm"}
                     </button>
                 </form>
 

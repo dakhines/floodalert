@@ -1,43 +1,23 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
+import { checkAccountEmail, sendEmailCode } from "../api/authApi";
 import logo from "../img/logo.png";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function getKnownAccountEmails() {
-    const emails = [];
-
-    try {
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        emails.push(
-            ...users
-                .map((user) => user?.email)
-                .filter(Boolean)
-        );
-    } catch {
-        // Ignore invalid mock storage and let backend validation handle it later.
-    }
-
-    try {
-        const currentUser = JSON.parse(localStorage.getItem("user"));
-        if (currentUser?.email) {
-            emails.push(currentUser.email);
-        }
-    } catch {
-        // Ignore invalid mock storage and let backend validation handle it later.
-    }
-
-    return [...new Set(emails.map((item) => item.toLowerCase()))];
-}
 
 export default function ForgotPassword() {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+        if (isSubmitting) {
+            return;
+        }
+
         const trimmedEmail = email.trim();
 
         if (!emailPattern.test(trimmedEmail)) {
@@ -45,19 +25,25 @@ export default function ForgotPassword() {
             return;
         }
 
-        const knownAccountEmails = getKnownAccountEmails();
-
-        // TODO: Backend must validate account ownership before sending reset code.
-        if (
-            knownAccountEmails.length > 0 &&
-            !knownAccountEmails.includes(trimmedEmail.toLowerCase())
-        ) {
-            setError("This email does not match your account.");
+        try {
+            setIsSubmitting(true);
+            const result = await checkAccountEmail(trimmedEmail);
+            if (!result.exists) {
+                setError("This email does not match your account.");
+                return;
+            }
+            await sendEmailCode({
+                email: trimmedEmail,
+                purpose: "reset-password",
+            });
+        } catch (err) {
+            setError(err.message || "Unable to verify this email.");
             return;
+        } finally {
+            setIsSubmitting(false);
         }
 
         sessionStorage.setItem("reset-email", trimmedEmail);
-        sessionStorage.setItem("reset-code", "1234");
         navigate("/verify-code");
     };
 
@@ -88,9 +74,10 @@ export default function ForgotPassword() {
                     />
                     <button
                         type="submit"
+                        disabled={isSubmitting}
                         className="w-full rounded-full border border-slate-950 px-4 py-2 text-sm font-bold text-slate-950"
                     >
-                        Submit
+                        {isSubmitting ? "Sending..." : "Submit"}
                     </button>
                 </form>
 

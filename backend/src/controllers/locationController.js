@@ -1,31 +1,144 @@
-﻿// 从我们刚才写的 locationService 中引入这两个方法
 const {
-  getAllLocations,
-  getLocationByName
-} = require("../services/locationService");
+    getAllRawData,
+    getRawDataByCity,
+} = require("../services/rawDataService");
+const { analyzeLocation } = require("../services/aiService");
 
-// 处理获取所有地点数据的请求
-function fetchAllLocations(req, res) {
-  // 调用 service 拿数据，并通过 res.json() 以 JSON 格式发送给前端
-  res.json(getAllLocations());
+function buildAiInput(location) {
+    return {
+        weatherAlert:
+            location.weather?.warning || location.weather?.forecast || "",
+        officialNotice: location.officialNotice?.notice || "",
+        publicInfobanjir: {
+            floodAlert: location.publicInfobanjir?.floodAlert?.summary || "",
+            metAlert: location.publicInfobanjir?.metAlert?.summary || "",
+            currentAlert: location.publicInfobanjir?.currentAlert?.summary || "",
+            siren: location.publicInfobanjir?.siren?.summary || "",
+        },
+        waterLevelContext: location.latestUpdate?.summary || "",
+        reason: location.reason || "",
+    };
 }
 
-// 处理根据名字获取特定地点数据的请求
-function fetchLocationByName(req, res) {
-  // 从请求的 URL 参数中提取名字 (req.params.name)
-  const location = getLocationByName(req.params.name);
+function mergeDefined(base, overrides) {
+    const merged = { ...base };
 
-  // 如果找不到这个地点，返回 404 错误状态码和错误提示
-  if (!location) {
-    return res.status(404).json({ error: "Location not found" });
-  }
+    Object.entries(overrides || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            merged[key] = value;
+        }
+    });
 
-  // 如果找到了，就把对应的地点数据发给前端
-  res.json(location);
+    return merged;
 }
 
-// 导出这两个控制器函数，供路由（Routes）使用
+async function safelyAnalyzeLocation(location) {
+    try {
+        const aiResult = await analyzeLocation({
+            ...location,
+            aiContext: buildAiInput(location),
+        });
+
+        const mergedLocation = mergeDefined(location, aiResult);
+
+        return {
+            ...mergedLocation,
+            location: location.location,
+            state: location.state,
+            status: mergedLocation.status || "Safe",
+            action: mergedLocation.action || "No immediate action needed",
+            reason:
+                mergedLocation.reason ||
+                "No significant flood risk detected at the moment",
+            latestUpdate: {
+                type:
+                    mergedLocation.latestUpdate?.type ||
+                    location.latestUpdate?.type ||
+                    "Update",
+                summary:
+                    mergedLocation.latestUpdate?.summary ||
+                    location.latestUpdate?.summary ||
+                    "No significant flood risk detected at the moment",
+            },
+            lastUpdate: mergedLocation.lastUpdate || location.lastUpdate,
+            stationId: location.stationId,
+            stationName: location.stationName,
+            district: location.district,
+            basin: location.basin,
+            subBasin: location.subBasin,
+            waterLevel: location.waterLevel,
+            thresholds: location.thresholds,
+            weather: location.weather,
+            officialNotice: location.officialNotice,
+            publicInfobanjir: location.publicInfobanjir,
+        };
+    } catch (error) {
+        console.error("AI analysis failed:", error.message);
+        return {
+            ...location,
+            status: location.status || "Safe",
+            action: location.action || "No immediate action needed",
+            reason:
+                location.reason ||
+                "No significant flood risk detected at the moment",
+            aiSummary: location.latestUpdate?.summary || location.reason,
+        };
+    }
+}
+
+async function fetchAllLocations(req, res) {
+    try {
+        const state = req.query.state;
+
+        if (!state) {
+            return res.status(400).json({ error: "State is required" });
+        }
+
+        const locations = await getAllRawData(state);
+        return res.json(locations);
+    } catch (error) {
+        console.error("fetchAllLocations error:", error.message);
+        return res.status(500).json({ error: "Failed to fetch live locations" });
+    }
+}
+
+async function fetchLocationByName(req, res) {
+    try {
+        const state = req.query.state;
+        const district = req.query.district || "";
+        const shouldAnalyze = req.query.ai !== "false";
+        const locationName = req.params.name;
+
+        if (!state) {
+            return res.status(400).json({ error: "State is required" });
+        }
+
+        const results = await getRawDataByCity(locationName, state, district, {
+            enrich: shouldAnalyze,
+        });
+        const location = results[0];
+
+        if (!location) {
+            return res.status(404).json({ error: "Location not found" });
+        }
+
+        const analyzedLocation = shouldAnalyze
+            ? await safelyAnalyzeLocation(location)
+            : location;
+
+        const finalLocation = {
+            ...analyzedLocation,
+            location: locationName,
+        };
+
+        return res.json(finalLocation);
+    } catch (error) {
+        console.error("fetchLocationByName error:", error.message);
+        return res.status(500).json({ error: "Failed to fetch live location" });
+    }
+}
+
 module.exports = {
-  fetchAllLocations,
-  fetchLocationByName
+    fetchAllLocations,
+    fetchLocationByName,
 };

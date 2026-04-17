@@ -6,6 +6,12 @@ export function ViewLocationProvider({ children }) {
     const [selectedState, setSelectedState] = useState("");
     const [selectedDistrict, setSelectedDistrict] = useState("");
 
+    const clearViewingLocation = () => {
+        setCurrentViewedLocation(null);
+        setSelectedState("");
+        setSelectedDistrict("");
+    };
+
     const updateViewingLocation = (location) => {
         if (typeof location === "string") {
             setCurrentViewedLocation({ location, state: "" });
@@ -23,6 +29,7 @@ export function ViewLocationProvider({ children }) {
     const value = {
         currentViewedLocation,
         viewingLocation: currentViewedLocation?.location || "",
+        clearViewingLocation,
         setViewingLocation: updateViewingLocation,
         selectedState,
         setSelectedState,

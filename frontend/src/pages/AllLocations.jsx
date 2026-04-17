@@ -1,26 +1,54 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { useAuth } from "../context/useAuth";
 import { useViewLocation } from "../context/useViewLocation";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import { fetchLocations } from "../api/floodApi";
-import { MALAYSIA_LOCATION_DATA } from "../data/locations";
-
-const statusStyles = {
-    "Evacuate": "bg-red-900 border-red-900/25 text-white",
-    "Flood Confirmed": "bg-red-500 border-red-900/25 text-white",
-    "Warning": "bg-orange-500 border-orange-900/25 text-white",
-    "Risk Rising": "bg-amber-500 border-amber-900/25 text-white",
-    "Safe": "bg-green-600 border-green-900/25 text-white",
-};
+import { findLocationPath, MALAYSIA_LOCATION_DATA } from "../data/locations";
+import { getLocationAliases } from "../data/locationAliases";
+import { getStatusClasses } from "../utils/floodStatus";
 
 function getCityName(item) {
     return item.city || item.location || item.name || "Unknown City";
 }
 
+function normalize(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function LocationRowSkeleton() {
+    const [messageIndex, setMessageIndex] = useState(0);
+    const messages = [
+        "Loading live statuses...",
+        "Checking station matches...",
+        "Preparing location list...",
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setMessageIndex((currentIndex) =>
+                Math.min(currentIndex + 1, messages.length - 1)
+            );
+        }, 1800);
+
+        return () => clearInterval(timer);
+    }, [messages.length]);
+
+    return (
+        <div className="rounded-xl border border-slate-300 bg-white px-4 py-6 text-center shadow-sm">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                {messages[messageIndex]}
+            </p>
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-sky-500" />
+        </div>
+    );
+}
+
 export default function AllLocations() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const {
         currentViewedLocation,
         selectedDistrict,
@@ -34,13 +62,20 @@ export default function AllLocations() {
     const [locationsError, setLocationsError] = useState("");
 
     useEffect(() => {
+        if (!selectedState) {
+            setLocations([]);
+            setLocationsLoading(false);
+            setLocationsError("");
+            return;
+        }
+
         const controller = new AbortController();
 
         async function loadLocations() {
             try {
                 setLocationsLoading(true);
                 setLocationsError("");
-                const data = await fetchLocations(controller.signal);
+                const data = await fetchLocations(selectedState, controller.signal);
                 setLocations(data);
             } catch (error) {
                 if (error.name !== "AbortError") {
@@ -55,16 +90,49 @@ export default function AllLocations() {
         loadLocations();
 
         return () => controller.abort();
-    }, []);
+    }, [selectedState]);
 
     const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
-    const statusByCity = useMemo(
-        () =>
-            new Map(
-                locations.map((item) => [getCityName(item), item])
-            ),
-        [locations]
-    );
+    const statusByCity = useMemo(() => {
+        const map = new Map();
+
+        locations.forEach((item) => {
+            map.set(normalize(getCityName(item)), item);
+            map.set(normalize(item.district), item);
+            map.set(normalize(item.stationName), item);
+        });
+
+        return map;
+    }, [locations]);
+
+    useEffect(() => {
+        if (selectedState && selectedDistrict) {
+            return;
+        }
+
+        const locationPath =
+            findLocationPath(currentViewedLocation?.location) ||
+            findLocationPath(user?.defaultLocation);
+
+        if (!locationPath) {
+            return;
+        }
+
+        if (!selectedState) {
+            setSelectedState(locationPath.state);
+        }
+
+        if (!selectedDistrict) {
+            setSelectedDistrict(locationPath.district);
+        }
+    }, [
+        currentViewedLocation?.location,
+        selectedDistrict,
+        selectedState,
+        setSelectedDistrict,
+        setSelectedState,
+        user?.defaultLocation,
+    ]);
 
     const districts = selectedState
         ? Object.keys(MALAYSIA_LOCATION_DATA[selectedState] || {})
@@ -74,6 +142,35 @@ export default function AllLocations() {
         selectedState && selectedDistrict
             ? MALAYSIA_LOCATION_DATA[selectedState]?.[selectedDistrict] || []
             : [];
+
+    const findStatusItem = (city) => {
+        const aliases = getLocationAliases(
+            city,
+            selectedDistrict,
+            selectedState
+        ).map(normalize);
+
+        for (const alias of aliases) {
+            const exactMatch = statusByCity.get(alias);
+
+            if (exactMatch) {
+                return exactMatch;
+            }
+        }
+
+        return locations.find((locationItem) => {
+            const searchableFields = [
+                locationItem.location,
+                locationItem.district,
+                locationItem.stationName,
+                locationItem.state,
+            ].map(normalize);
+
+            return aliases.some((alias) =>
+                searchableFields.some((field) => field.includes(alias))
+            );
+        });
+    };
 
     const handleSelect = (city) => {
         setViewingLocation({
@@ -131,9 +228,7 @@ export default function AllLocations() {
 
             <section className="mt-5 space-y-3">
                 {locationsLoading && (
-                    <p className="rounded-xl border border-slate-300 bg-white p-4 text-sm text-slate-500">
-                        Loading locations...
-                    </p>
+                    <LocationRowSkeleton />
                 )}
 
                 {locationsError && (
@@ -153,17 +248,24 @@ export default function AllLocations() {
                 {!locationsLoading &&
                     !locationsError &&
                     cities.map((city) => {
-                        const item = statusByCity.get(city);
-                        const isViewingNow =
+                        const item = findStatusItem(city);
+                        const isDefaultLocation =
+                            normalize(user?.defaultLocation) === normalize(city) &&
+                            normalize(user?.defaultState || user?.state) ===
+                                normalize(selectedState) &&
+                            normalize(user?.defaultDistrict) ===
+                                normalize(selectedDistrict);
+                        const isViewingLocation =
                             (currentViewedLocation?.city === city ||
                                 currentViewedLocation?.location === city) &&
                             currentViewedLocation?.state === selectedState &&
                             currentViewedLocation?.district === selectedDistrict;
+                        const isViewingNow = isViewingLocation && !isDefaultLocation;
 
                         return (
                             <article
                                 key={city}
-                                className={`w-full rounded-xl border px-4 py-3 text-left shadow-sm transition duration-200 hover:border-sky-300 hover:bg-sky-50/40 ${
+                                className={`soft-pop w-full rounded-xl border px-4 py-3 text-left shadow-sm transition duration-200 hover:border-sky-300 hover:bg-sky-50/40 ${
                                     isViewingNow
                                         ? "border-sky-400 bg-sky-50"
                                         : "border-slate-300 bg-white"
@@ -174,6 +276,11 @@ export default function AllLocations() {
                                         <h2 className="truncate text-sm font-bold text-slate-950">
                                             {city}
                                         </h2>
+                                        {isDefaultLocation && (
+                                            <p className="mt-1 text-[11px] font-bold text-emerald-700">
+                                                Saved default
+                                            </p>
+                                        )}
                                         {isViewingNow && (
                                             <p className="mt-1 text-[11px] font-bold text-sky-700">
                                                 Viewing now
@@ -183,11 +290,12 @@ export default function AllLocations() {
                                     <div className="flex shrink-0 items-center gap-3">
                                         <span
                                             className={`rounded-full border px-3 py-1 text-[11px] font-bold ${
-                                                statusStyles[item?.status] ||
-                                                "bg-white text-slate-700 border-slate-300"
+                                                item?.status
+                                                    ? getStatusClasses(item.status)
+                                                    : "bg-white text-slate-700 border-slate-300"
                                             }`}
                                         >
-                                            {item?.status || "No Alert"}
+                                            {item?.status || "No live match"}
                                         </span>
                                         <button
                                             type="button"

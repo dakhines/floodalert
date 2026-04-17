@@ -11,10 +11,22 @@ export default function ChangeUsername() {
     const [newUsername, setNewUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         const trimmedUsername = newUsername.trim();
+        const trimmedPassword = password.trim();
+
+        if (!trimmedUsername) {
+            setError("Please enter a new username.");
+            return;
+        }
+
+        if (!trimmedPassword) {
+            setError("Please enter your password.");
+            return;
+        }
 
         if (
             user?.name &&
@@ -27,20 +39,23 @@ export default function ChangeUsername() {
         // TODO: Backend must also validate username uniqueness and prevent reusing the current username.
 
         try {
-            updateProfile({
+            setIsUpdating(true);
+            await updateProfile({
                 name: trimmedUsername,
                 email: user?.email,
-                currentPassword: password,
+                currentPassword: trimmedPassword,
             });
             navigate("/settings");
         } catch (err) {
             setError(err.message);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
     return (
         <AppShell className="pb-24">
-            <Link to="/settings/edit" className="text-sm font-bold text-slate-600 hover:text-blue-500">
+            <Link replace to="/settings/edit" className="text-sm font-bold text-slate-600 hover:text-blue-500">
                 Back
             </Link>
             <h1 className="mt-3 text-2xl font-bold text-slate-950">
@@ -56,20 +71,29 @@ export default function ChangeUsername() {
             <form onSubmit={handleSubmit} className="mt-5 space-y-3">
                 <input
                     value={newUsername}
-                    onChange={(event) => setNewUsername(event.target.value)}
+                    onChange={(event) => {
+                        setNewUsername(event.target.value);
+                        setError("");
+                    }}
                     placeholder="New Username"
+                    required
                     className="h-12 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-600"
                 />
                 <PasswordField
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) => {
+                        setPassword(event.target.value);
+                        setError("");
+                    }}
                     placeholder="Password"
+                    required
                 />
                 <button
                     type="submit"
+                    disabled={isUpdating}
                     className="w-full rounded-xl bg-blue-600 p-3 text-sm font-bold text-white"
                 >
-                    Update Username
+                    {isUpdating ? "Updating..." : "Update Username"}
                 </button>
             </form>
 

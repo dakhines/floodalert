@@ -14,11 +14,16 @@ export default function ChangePassword() {
     });
     const [error, setError] = useState("");
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (sessionStorage.getItem("password-change-verified") !== "true") {
             navigate("/verify-password-code");
+            return;
+        }
+
+        if (!sessionStorage.getItem("password-change-token")) {
+            setError("Verify your email code first.");
             return;
         }
 
@@ -27,21 +32,16 @@ export default function ChangePassword() {
             return;
         }
 
-        if (user?.password && form.password === user.password) {
-            setError("New password must be different from your current password.");
-            return;
-        }
-
         try {
-            // TODO: Backend must verify current password and prevent password reuse.
-            updateProfile({
+            await updateProfile({
                 name: user?.name,
                 email: user?.email,
                 password: form.password,
-                currentPassword: user?.password,
-                code: "1234",
+                verificationToken:
+                    sessionStorage.getItem("password-change-token") || "",
             });
             sessionStorage.removeItem("password-change-verified");
+            sessionStorage.removeItem("password-change-token");
             navigate("/settings");
         } catch (err) {
             setError(err.message);
@@ -51,6 +51,7 @@ export default function ChangePassword() {
     return (
         <AppShell className="pb-24">
             <Link
+                replace
                 to="/verify-password-code"
                 className="text-sm font-bold text-slate-600 hover:text-blue-500"
             >
@@ -69,16 +70,18 @@ export default function ChangePassword() {
             <form onSubmit={handleSubmit} className="mt-5 space-y-3">
                 <PasswordField
                     value={form.password}
-                    onChange={(event) =>
-                        setForm({ ...form, password: event.target.value })
-                    }
+                    onChange={(event) => {
+                        setForm({ ...form, password: event.target.value });
+                        setError("");
+                    }}
                     placeholder="New Password"
                 />
                 <PasswordField
                     value={form.confirmPassword}
-                    onChange={(event) =>
-                        setForm({ ...form, confirmPassword: event.target.value })
-                    }
+                    onChange={(event) => {
+                        setForm({ ...form, confirmPassword: event.target.value });
+                        setError("");
+                    }}
                     placeholder="Confirm New Password"
                 />
                 <button

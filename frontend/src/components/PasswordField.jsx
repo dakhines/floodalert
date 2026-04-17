@@ -7,6 +7,7 @@ export default function PasswordField({
     placeholder = "Password",
     className = "",
     inputClassName = "",
+    ...inputProps
 }) {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -19,6 +20,7 @@ export default function PasswordField({
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
+                {...inputProps}
                 className={`min-w-0 flex-1 rounded-l-xl px-4 py-3 text-sm outline-none ${inputClassName}`}
             />
             <button
