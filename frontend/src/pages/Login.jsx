@@ -87,7 +87,7 @@ export default function Login() {
                         />
                         <Link
                             to="/forgot-password"
-                            className="mt-1 block text-right text-[11px] font-semibold text-slate-500"
+                            className="mt-1 block text-right text-[11px] font-semibold text-slate-500 hover:text-blue-500"
                         >
                             Forgot password?
                         </Link>

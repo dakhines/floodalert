@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
@@ -16,11 +16,12 @@ export default function VerifyPasswordCode() {
     );
     const [error, setError] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const autoSendStartedRef = useRef(false);
     const { cooldownSeconds, isCoolingDown, startCooldown } =
-        useResendCooldown(30);
+        useResendCooldown(30, 0, "change-password-resend-cooldown");
 
-    const handleSendCode = async () => {
-        if (isSending || isCoolingDown) {
+    const handleSendCode = useCallback(async ({ ignoreCooldown = false } = {}) => {
+        if (isSending || (!ignoreCooldown && isCoolingDown)) {
             return;
         }
 
@@ -39,7 +40,16 @@ export default function VerifyPasswordCode() {
         } finally {
             setIsSending(false);
         }
-    };
+    }, [isCoolingDown, isSending, startCooldown, user?.email]);
+
+    useEffect(() => {
+        if (autoSendStartedRef.current || !user?.email) {
+            return;
+        }
+
+        autoSendStartedRef.current = true;
+        handleSendCode({ ignoreCooldown: true });
+    }, [handleSendCode, user?.email]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -81,27 +91,14 @@ export default function VerifyPasswordCode() {
                 </p>
             )}
 
-            <button
-                type="button"
-                onClick={handleSendCode}
-                disabled={isSending || isCoolingDown}
-                className="mt-5 w-full rounded-xl border border-slate-950 p-3 text-sm font-bold text-slate-950"
-            >
-                {isSending
-                    ? "Sending..."
-                    : isCoolingDown
-                      ? `Send again in ${cooldownSeconds}s`
-                      : "Send verification code"}
-            </button>
-
             <form
                 onSubmit={handleSubmit}
-                className="mx-auto mt-5 flex max-w-xs flex-col items-center space-y-3"
+                className="mx-auto mt-8 flex max-w-xs flex-col items-center space-y-3"
             >
                 <OTPInput value={code} onChange={setCode} />
                 <button
                     type="submit"
-                    className="w-full rounded-xl bg-blue-600 p-3 text-sm font-bold text-white"
+                    className="w-full rounded-xl bg-blue-600 p-3 text-sm font-bold text-white hover:scale-103"
                 >
                     Verify
                 </button>
@@ -110,7 +107,7 @@ export default function VerifyPasswordCode() {
                 type="button"
                 onClick={handleSendCode}
                 disabled={isSending || isCoolingDown}
-                className="mt-3 block w-full text-center text-xs font-semibold text-gray-500"
+                className="mt-3 block w-full text-center text-xs font-semibold text-gray-500 hover:text-blue-500 disabled:hover:text-gray-500"
             >
                 {isCoolingDown ? `Send again in ${cooldownSeconds}s` : "Send again"}
             </button>

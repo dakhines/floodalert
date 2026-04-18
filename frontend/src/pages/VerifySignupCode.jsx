@@ -16,7 +16,7 @@ export default function VerifySignupCode() {
     const [error, setError] = useState("");
     const [isSending, setIsSending] = useState(false);
     const { cooldownSeconds, isCoolingDown, startCooldown } =
-        useResendCooldown(30, 30);
+        useResendCooldown(30, 30, "signup-resend-cooldown");
 
     if (user) {
         return <Navigate to="/home" replace />;
@@ -94,7 +94,7 @@ export default function VerifySignupCode() {
                     type="button"
                     onClick={handleSendAgain}
                     disabled={isSending || isCoolingDown}
-                    className="mt-3 block w-full text-center text-[11px] font-semibold text-slate-500"
+                    className="mt-3 block w-full text-center text-[11px] font-semibold text-slate-500 hover:text-blue-500 disabled:hover:text-slate-500"
                 >
                     {isSending
                         ? "Sending..."

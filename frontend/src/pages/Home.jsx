@@ -180,6 +180,7 @@ export default function Home() {
     ]);
 
     const aiSummary =
+        selectedLocation?.userSummary ||
         selectedLocation?.aiSummary ||
         `Based on current flood data, ${selectedLocation?.location || "this area"} is marked "${selectedLocation?.status || "Unknown"}". ${selectedLocation?.latestUpdate?.summary || ""}`;
     const [now, setNow] = useState(new Date());

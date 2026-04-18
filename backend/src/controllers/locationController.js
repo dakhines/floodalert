@@ -61,6 +61,16 @@ async function safelyAnalyzeLocation(location) {
                     "No significant flood risk detected at the moment",
             },
             lastUpdate: mergedLocation.lastUpdate || location.lastUpdate,
+            userSummary:
+                mergedLocation.userSummary ||
+                location.userSummary ||
+                mergedLocation.latestUpdate?.summary ||
+                location.latestUpdate?.summary ||
+                "No significant flood risk detected at the moment.",
+            sourceNote:
+                mergedLocation.sourceNote ||
+                location.sourceNote ||
+                "Based on the latest available flood monitoring data.",
             stationId: location.stationId,
             stationName: location.stationName,
             district: location.district,
@@ -82,6 +92,14 @@ async function safelyAnalyzeLocation(location) {
                 location.reason ||
                 "No significant flood risk detected at the moment",
             aiSummary: location.latestUpdate?.summary || location.reason,
+            userSummary:
+                location.userSummary ||
+                location.latestUpdate?.summary ||
+                location.reason ||
+                "No significant flood risk detected at the moment.",
+            sourceNote:
+                location.sourceNote ||
+                "Based on the latest available flood monitoring data.",
         };
     }
 }

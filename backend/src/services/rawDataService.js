@@ -120,6 +120,48 @@ function getRiskLabel(status) {
   return "Normal";
 }
 
+function buildUserSummary(item) {
+  const locationName = item.location || item.district || "this area";
+
+  if (item.status === "Safe") {
+    return `${locationName} is currently marked Safe. No immediate action is needed, but keep checking updates if heavy rain continues.`;
+  }
+
+  return `${locationName} is currently marked ${item.status}. ${item.action || "Follow official guidance and monitor updates."}`;
+}
+
+function buildSourceNote(item, optionalSources = {}) {
+  const sources = [];
+  const hasInfobanjirContent = Boolean(
+    optionalSources.publicInfobanjir?.floodAlert?.summary ||
+      optionalSources.publicInfobanjir?.metAlert?.summary ||
+      optionalSources.publicInfobanjir?.currentAlert?.summary ||
+      optionalSources.publicInfobanjir?.siren?.summary
+  );
+
+  if (item.stationName || item.waterLevel !== null) {
+    sources.push("live JPS water-level data");
+  }
+
+  if (optionalSources.weather?.forecast || optionalSources.weather?.warning) {
+    sources.push("METMalaysia or Public Infobanjir weather alerts");
+  }
+
+  if (optionalSources.officialNotice?.notice) {
+    sources.push("NADMA official notices");
+  }
+
+  if (hasInfobanjirContent) {
+    sources.push("Public Infobanjir notices");
+  }
+
+  if (sources.length === 0) {
+    return "Based on the latest available flood monitoring data.";
+  }
+
+  return `Based on ${sources.join(", ")}.`;
+}
+
 function extractRows(payload) {
   if (Array.isArray(payload)) {
     return payload;
@@ -245,6 +287,9 @@ function buildMonitoringFallback(state, location = state) {
       summary:
         "No recent JPS water-level reading is available for this area. Check weather warnings and official announcements for local flash flood risk.",
     },
+    userSummary:
+      "No recent JPS water-level reading is available for this area. FloodAlert is monitoring weather and official updates for possible flash flood risk.",
+    sourceNote: "Based on weather and official flood monitoring sources when available.",
     weather: null,
     officialNotice: null,
   };
@@ -317,8 +362,7 @@ function normalizeJpsRow(row, state) {
     status === "Safe"
       ? "No significant flood risk detected at the moment"
       : `JPS water level is ${waterLevel ?? "-"}m at ${stationName || "unknown station"}, compared with ${riskLabel.toLowerCase()} threshold conditions.`;
-
-  return {
+  const baseItem = {
     location: district || stationName || "Unknown location",
     state,
     stationId,
@@ -338,6 +382,12 @@ function normalizeJpsRow(row, state) {
     },
     weather: null,
     officialNotice: null,
+  };
+
+  return {
+    ...baseItem,
+    userSummary: buildUserSummary(baseItem),
+    sourceNote: buildSourceNote(baseItem),
   };
 }
 
@@ -473,7 +523,7 @@ async function enrichWithOptionalSources(item, state, location) {
   const floodAlertSummary = publicInfobanjir?.floodAlert?.summary || "";
   const currentAlertSummary = publicInfobanjir?.currentAlert?.summary || "";
 
-  return {
+  const enrichedItem = {
     ...item,
     weather: {
       source: "METMalaysia / Public Infobanjir",
@@ -497,6 +547,16 @@ async function enrichWithOptionalSources(item, state, location) {
     },
     officialNotice,
     publicInfobanjir,
+  };
+
+  return {
+    ...enrichedItem,
+    userSummary: item.userSummary || buildUserSummary(enrichedItem),
+    sourceNote: buildSourceNote(enrichedItem, {
+      weather: enrichedItem.weather,
+      officialNotice,
+      publicInfobanjir,
+    }),
   };
 }
 

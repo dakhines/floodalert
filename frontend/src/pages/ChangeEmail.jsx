@@ -13,20 +13,44 @@ import {
 import useResendCooldown from "../hooks/useResendCooldown";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CHANGE_EMAIL_STATE_KEY = "change-email-state";
+
+function readChangeEmailState() {
+    try {
+        return JSON.parse(sessionStorage.getItem(CHANGE_EMAIL_STATE_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function saveChangeEmailState(state) {
+    sessionStorage.setItem(CHANGE_EMAIL_STATE_KEY, JSON.stringify(state));
+}
+
+function clearChangeEmailState() {
+    sessionStorage.removeItem(CHANGE_EMAIL_STATE_KEY);
+}
 
 export default function ChangeEmail() {
     const navigate = useNavigate();
     const { user, updateProfile } = useAuth();
-    const [newEmail, setNewEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [code, setCode] = useState("");
-    const [pendingEmail, setPendingEmail] = useState("");
-    const [message, setMessage] = useState("");
+    const savedState = readChangeEmailState();
+    const [newEmail, setNewEmail] = useState(savedState.newEmail || "");
+    const [password, setPassword] = useState(savedState.password || "");
+    const [code, setCode] = useState(savedState.code || "");
+    const [pendingEmail, setPendingEmail] = useState(
+        savedState.pendingEmail || ""
+    );
+    const [message, setMessage] = useState(
+        savedState.pendingEmail
+            ? "Enter the 4 digit code sent to your new email."
+            : ""
+    );
     const [error, setError] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const { cooldownSeconds, isCoolingDown, startCooldown } =
-        useResendCooldown(30);
+        useResendCooldown(30, 0, "change-email-resend-cooldown");
 
     const sendChangeEmailCode = async (email) => {
         await sendEmailCode({
@@ -73,6 +97,12 @@ export default function ChangeEmail() {
             setCode("");
             setError("");
             setMessage("Enter the 4 digit code sent to your new email.");
+            saveChangeEmailState({
+                newEmail: trimmedEmail,
+                password: trimmedPassword,
+                pendingEmail: trimmedEmail,
+                code: "",
+            });
             startCooldown();
         } catch (err) {
             setMessage("");
@@ -119,9 +149,9 @@ export default function ChangeEmail() {
             await updateProfile({
                 name: user?.name,
                 email: pendingEmail,
-                currentPassword: password.trim(),
                 emailVerificationToken: result.verificationToken || "",
             });
+            clearChangeEmailState();
             navigate("/settings");
         } catch (err) {
             setError(err.message);
@@ -155,10 +185,12 @@ export default function ChangeEmail() {
                     type="email"
                     value={newEmail}
                     onChange={(event) => {
-                        setNewEmail(event.target.value);
+                        const value = event.target.value;
+                        setNewEmail(value);
                         setPendingEmail("");
                         setMessage("");
                         setError("");
+                        clearChangeEmailState();
                     }}
                     placeholder="New Email"
                     disabled={Boolean(pendingEmail)}
@@ -168,10 +200,12 @@ export default function ChangeEmail() {
                 <PasswordField
                     value={password}
                     onChange={(event) => {
-                        setPassword(event.target.value);
+                        const value = event.target.value;
+                        setPassword(value);
                         setPendingEmail("");
                         setMessage("");
                         setError("");
+                        clearChangeEmailState();
                     }}
                     placeholder="Password"
                     required
@@ -179,18 +213,15 @@ export default function ChangeEmail() {
                     className={pendingEmail ? "bg-slate-100" : ""}
                     inputClassName={pendingEmail ? "bg-slate-100 text-slate-500" : ""}
                 />
-                <button
-                    type={pendingEmail ? "button" : "submit"}
-                    disabled={isSending || isCoolingDown}
-                    className="w-full rounded-xl bg-blue-600 p-3 text-sm font-bold text-white"
-                    onClick={pendingEmail ? handleSendAgain : undefined}
-                >
-                    {isSending
-                        ? "Sending..."
-                        : pendingEmail && isCoolingDown
-                          ? `Send again in ${cooldownSeconds}s`
-                          : "Send Verification Code"}
-                </button>
+                {!pendingEmail && (
+                    <button
+                        type="submit"
+                        disabled={isSending}
+                        className="w-full rounded-xl bg-blue-600 p-3 text-sm font-bold text-white"
+                    >
+                        {isSending ? "Sending..." : "Send Verification Code"}
+                    </button>
+                )}
             </form>
 
             {pendingEmail && (
@@ -201,6 +232,12 @@ export default function ChangeEmail() {
                     <OTPInput value={code} onChange={(value) => {
                         setCode(value);
                         setError("");
+                        saveChangeEmailState({
+                            newEmail,
+                            password,
+                            pendingEmail,
+                            code: value,
+                        });
                     }} />
                     <button
                         type="submit"
@@ -213,9 +250,11 @@ export default function ChangeEmail() {
                         type="button"
                         onClick={handleSendAgain}
                         disabled={isSending || isCoolingDown}
-                        className="text-xs font-bold text-slate-500"
+                        className="text-xs font-bold text-slate-500 hover:text-blue-500 disabled:hover:text-slate-500"
                     >
-                        Didn't receive the code? Send again
+                        {isCoolingDown
+                            ? `You can send again in ${cooldownSeconds}s`
+                            : "Didn't receive the code? Send again"}
                     </button>
                     <button
                         type="button"
@@ -224,8 +263,9 @@ export default function ChangeEmail() {
                             setCode("");
                             setMessage("");
                             setError("");
+                            clearChangeEmailState();
                         }}
-                        className="text-xs font-bold text-slate-500"
+                        className="text-xs font-bold text-slate-500 hover:text-blue-500"
                     >
                         Change email address
                     </button>

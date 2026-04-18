@@ -13,7 +13,7 @@ export default function VerifyCode() {
     const [error, setError] = useState("");
     const [isSending, setIsSending] = useState(false);
     const { cooldownSeconds, isCoolingDown, startCooldown } =
-        useResendCooldown(30, 30);
+        useResendCooldown(30, 30, "reset-password-resend-cooldown");
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -96,7 +96,7 @@ export default function VerifyCode() {
                     type="button"
                     onClick={handleSendAgain}
                     disabled={isSending || isCoolingDown}
-                    className="mt-3 block w-full text-center text-[11px] font-semibold text-slate-500"
+                    className="mt-3 block w-full text-center text-[11px] font-semibold text-slate-500 hover:text-blue-500 disabled:hover:text-slate-500"
                 >
                     {isSending
                         ? "Sending..."

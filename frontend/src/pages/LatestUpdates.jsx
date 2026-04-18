@@ -7,6 +7,10 @@ import { fetchLocationByName, getCachedLocationByName } from "../api/floodApi";
 import { findLocationPath } from "../data/locations";
 
 function buildSummary(item) {
+    if (item.userSummary) {
+        return item.userSummary;
+    }
+
     if (item.latestUpdate) {
         const actionText = item.action
             ? ` Suggested action: ${item.action.toLowerCase()}.`
