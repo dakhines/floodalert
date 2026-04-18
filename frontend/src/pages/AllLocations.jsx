@@ -10,10 +10,6 @@ import { findLocationPath, MALAYSIA_LOCATION_DATA } from "../data/locations";
 import { getLocationAliases } from "../data/locationAliases";
 import { getStatusClasses } from "../utils/floodStatus";
 
-function getCityName(item) {
-    return item.city || item.location || item.name || "Unknown City";
-}
-
 function normalize(value) {
     return String(value || "").trim().toLowerCase();
 }
@@ -93,17 +89,23 @@ export default function AllLocations() {
     }, [selectedState]);
 
     const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
-    const statusByCity = useMemo(() => {
-        const map = new Map();
 
-        locations.forEach((item) => {
-            map.set(normalize(getCityName(item)), item);
-            map.set(normalize(item.district), item);
-            map.set(normalize(item.stationName), item);
+    const findStatusItem = (city) => {
+        const targets = getLocationAliases(city, selectedDistrict, selectedState)
+            .map(normalize)
+            .filter(Boolean);
+
+        return locations.find((item) => {
+            const itemNames = [
+                item.location,
+                item.city,
+                item.name,
+                item.district,
+            ].map(normalize);
+
+            return targets.some((target) => itemNames.includes(target));
         });
-
-        return map;
-    }, [locations]);
+    };
 
     useEffect(() => {
         if (selectedState && selectedDistrict) {
@@ -142,35 +144,6 @@ export default function AllLocations() {
         selectedState && selectedDistrict
             ? MALAYSIA_LOCATION_DATA[selectedState]?.[selectedDistrict] || []
             : [];
-
-    const findStatusItem = (city) => {
-        const aliases = getLocationAliases(
-            city,
-            selectedDistrict,
-            selectedState
-        ).map(normalize);
-
-        for (const alias of aliases) {
-            const exactMatch = statusByCity.get(alias);
-
-            if (exactMatch) {
-                return exactMatch;
-            }
-        }
-
-        return locations.find((locationItem) => {
-            const searchableFields = [
-                locationItem.location,
-                locationItem.district,
-                locationItem.stationName,
-                locationItem.state,
-            ].map(normalize);
-
-            return aliases.some((alias) =>
-                searchableFields.some((field) => field.includes(alias))
-            );
-        });
-    };
 
     const handleSelect = (city) => {
         setViewingLocation({

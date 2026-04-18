@@ -1,4 +1,4 @@
-export const MALAYSIA_LOCATION_DATA = {
+const MALAYSIA_LOCATION_DATA = {
     "Johor": {
         "Johor Bahru": ["Johor Bahru City", "Iskandar Puteri", "Skudai", "Tebrau", "Pasir Gudang", "Ulu Tiram", "Plentong", "Pulai", "Mount Austin", "Bukit Indah", "Kempas", "Tampoi", "Larkin", "Permas Jaya"],
         "Kulai": ["Kulai Town", "Senai", "Sedenak", "Kelapa Sawit", "Indahpura", "Bandar Putra", "Saleng"],
@@ -141,7 +141,7 @@ export const MALAYSIA_LOCATION_DATA = {
     }
 };
 
-export function findLocationPath(cityOrArea) {
+function findLocationPath(cityOrArea) {
     const target = String(cityOrArea || "").trim().toLowerCase();
 
     if (!target) {
@@ -158,3 +158,8 @@ export function findLocationPath(cityOrArea) {
 
     return null;
 }
+
+module.exports = {
+    MALAYSIA_LOCATION_DATA,
+    findLocationPath
+};

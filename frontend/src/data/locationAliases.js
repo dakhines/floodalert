@@ -44,6 +44,5 @@ export function getLocationAliases(locationName, district = "", state = "") {
         ...aliases,
         district,
         withoutCommonSuffixes(district),
-        state,
     ]);
 }

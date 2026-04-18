@@ -1,8 +1,24 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const MODEL_NAME = "gemini-1.5-flash-latest";
+const DEFAULT_MODEL_CANDIDATES = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-001",
+  "gemini-2.0-flash-lite",
+];
 
-function getModel() {
+let workingModelName = null;
+
+function getModelCandidates() {
+  const configuredModels = String(process.env.GEMINI_MODEL || "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+
+  return [...new Set([...configuredModels, ...DEFAULT_MODEL_CANDIDATES])];
+}
+
+function getModel(modelName) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -12,11 +28,11 @@ function getModel() {
   const genAI = new GoogleGenerativeAI(apiKey);
 
   return genAI.getGenerativeModel({
-    model: MODEL_NAME,
+    model: modelName,
     systemInstruction: [
       "You are a flood risk analysis assistant.",
       "Analyze structured flood source data and return frontend-ready flood status JSON.",
-      "Write for normal app users. Keep the wording clear, calm, short, and action-focused.",
+      "Write for normal app users. Keep the wording clear, calm, short, and action-focused. Prioritize user safety without causing panic.",
       "Do not include raw threshold tables, station IDs, or internal source details unless they directly help the user understand what to do.",
       "MUST return ONLY JSON.",
       'The JSON must match this shape: {"status":"Safe | Risk Rising | Warning | Flood Confirmed | Evacuate","action":"string","reason":"string","latestUpdate":{"type":"string","summary":"string"},"lastUpdate":"string","userSummary":"string","sourceNote":"string"}',
@@ -25,7 +41,6 @@ function getModel() {
 }
 
 async function analyzeLocation(rawData) {
-  const model = getModel();
   const prompt = [
     "Analyze this raw flood data and produce the required JSON output.",
     "Use userSummary for a one or two sentence explanation that a resident can understand quickly.",
@@ -33,21 +48,43 @@ async function analyzeLocation(rawData) {
     "Raw data:",
     JSON.stringify(rawData),
   ].join("\n");
+  const modelCandidates = workingModelName
+    ? [workingModelName]
+    : getModelCandidates();
+  let lastError = null;
 
-  const result = await model.generateContent({
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: prompt }],
-      },
-    ],
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
+  for (const modelName of modelCandidates) {
+    try {
+      const model = getModel(modelName);
+      const result = await model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      });
+      const text = result.response.text();
 
-  const text = result.response.text();
-  return JSON.parse(text);
+      workingModelName = modelName;
+      return JSON.parse(text);
+    } catch (error) {
+      if (error.message && error.message.includes("API key not valid")) {
+        throw new Error("Gemini API key is invalid or missing.");
+      }
+      lastError = error;
+      workingModelName = null;
+    }
+  }
+
+  if (lastError && lastError.message.includes("API key not valid")) {
+    throw new Error("Gemini API key is invalid or missing.");
+  }
+
+  throw lastError || new Error("No Gemini model candidates are available");
 }
 
 module.exports = { analyzeLocation };

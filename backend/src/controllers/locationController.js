@@ -1,5 +1,5 @@
 const {
-    getAllRawData,
+    getRawDataByState,
     getRawDataByCity,
 } = require("../services/rawDataService");
 const { analyzeLocation } = require("../services/aiService");
@@ -16,6 +16,17 @@ function buildAiInput(location) {
             siren: location.publicInfobanjir?.siren?.summary || "",
         },
         waterLevelContext: location.latestUpdate?.summary || "",
+        satellite:
+            location.satellite?.hasFloodSignal !== undefined
+                ? {
+                      source: location.satellite.source,
+                      hasFloodSignal: location.satellite.hasFloodSignal,
+                      waterFraction: location.satellite.waterFraction,
+                      note: location.satellite.note,
+                  }
+                : location.satellite?.status === "disabled"
+                ? location.satellite
+                : null,
         reason: location.reason || "",
     };
 }
@@ -81,9 +92,14 @@ async function safelyAnalyzeLocation(location) {
             weather: location.weather,
             officialNotice: location.officialNotice,
             publicInfobanjir: location.publicInfobanjir,
+            satellite: location.satellite,
         };
     } catch (error) {
-        console.error("AI analysis failed:", error.message);
+        if (error.message === "Gemini API key is invalid or missing.") {
+            console.error("AI analysis failed:", error.message);
+        } else {
+            console.error("AI analysis failed:", error.message);
+        }
         return {
             ...location,
             status: location.status || "Safe",
@@ -112,7 +128,7 @@ async function fetchAllLocations(req, res) {
             return res.status(400).json({ error: "State is required" });
         }
 
-        const locations = await getAllRawData(state);
+        const locations = await getRawDataByState(state);
         return res.json(locations);
     } catch (error) {
         console.error("fetchAllLocations error:", error.message);

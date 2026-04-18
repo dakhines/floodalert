@@ -40,6 +40,10 @@ function normalizeLocation(item, fallbackLocation = "") {
             type: latestUpdate.type || "Update",
             summary: latestUpdate.summary || "No recent official update.",
         },
+        stations: item.stations || [],
+        dataBasis: item.dataBasis || "unknown",
+        confidence: item.confidence || "low",
+        sourceNote: item.sourceNote || "",
     };
 }
 

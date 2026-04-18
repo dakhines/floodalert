@@ -1,6 +1,8 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { getLocationAliases } = require("../data/locationAliases");
+const { MALAYSIA_LOCATION_DATA } = require("../data/locations");
+const { analyzeSatelliteFloodSignal } = require("./satelliteImageryService");
 
 const INFOBANJIR_SOURCES = {
   floodAlert:
@@ -11,6 +13,8 @@ const INFOBANJIR_SOURCES = {
   siren: "https://publicinfobanjir.water.gov.my/cerapan/siren/?lang=en",
 };
 const NADMA_DISASTER_INFO_URL = "https://www.nadma.gov.my/bm/#informasi-bencana";
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+const WEATHER_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1000;
 
 const STATE_CODE_MAP = {
   Selangor: ["SEL", "10"],
@@ -35,6 +39,9 @@ const STATE_CODE_MAP = {
 };
 
 const stateCodeCache = new Map();
+const weatherCache = new Map();
+const weatherPendingRequests = new Map();
+let metMalaysiaCooldownUntil = 0;
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -398,8 +405,7 @@ function matchesLocation(item, location, district = "", state = "") {
     (target) =>
       normalize(item.location) === target ||
       normalize(item.district) === target ||
-      normalize(item.stationName).includes(target) ||
-      normalize(item.state) === target
+      normalize(item.stationName).includes(target)
   );
 }
 
@@ -457,7 +463,7 @@ function normalizeWeatherItem(item) {
   };
 }
 
-async function fetchMetMalaysiaWeather(state, location) {
+async function fetchMetMalaysiaWeatherFresh(state, location) {
   const endpoints = [
     `https://api.data.gov.my/weather/forecast?contains=${encodeURIComponent(location)}@location__location_name`,
     `https://api.data.gov.my/weather/forecast?contains=${encodeURIComponent(state)}@location__location_name`,
@@ -481,11 +487,51 @@ async function fetchMetMalaysiaWeather(state, location) {
         return weather;
       }
     } catch (error) {
+      if (error.response?.status === 429) {
+        metMalaysiaCooldownUntil = Date.now() + WEATHER_RATE_LIMIT_COOLDOWN_MS;
+        console.error("METMalaysia rate limited. Using cached or fallback weather data.");
+        break;
+      }
+
       console.error("METMalaysia fetch failed:", error.message);
     }
   }
 
   return null;
+}
+
+async function fetchMetMalaysiaWeather(state, location) {
+  const cacheKey = normalize(`${state}:${location}`);
+  const cached = weatherCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < WEATHER_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  if (now < metMalaysiaCooldownUntil) {
+    return cached?.data || null;
+  }
+
+  if (weatherPendingRequests.has(cacheKey)) {
+    return weatherPendingRequests.get(cacheKey);
+  }
+
+  const request = fetchMetMalaysiaWeatherFresh(state, location)
+    .then((weather) => {
+      weatherCache.set(cacheKey, {
+        data: weather,
+        timestamp: Date.now(),
+      });
+
+      return weather;
+    })
+    .finally(() => {
+      weatherPendingRequests.delete(cacheKey);
+    });
+
+  weatherPendingRequests.set(cacheKey, request);
+  return request;
 }
 
 async function fetchNadmaNotice(state, location) {
@@ -571,25 +617,210 @@ async function getAllRawData(state) {
   return [buildMonitoringFallback(state)];
 }
 
-async function getRawDataByCity(city, state, district = "", options = {}) {
-  const items = await getAllRawData(state);
-  const matches = items.filter((item) => matchesLocation(item, city, district, state));
+function withoutCommonSuffixes(locationName) {
+  return String(locationName || "").replace(/\s+(city|town|area)$/i, "").trim();
+}
 
-  if (matches.length === 0) {
-    const fallback = buildMonitoringFallback(state, city);
+function unique(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const key = normalize(value);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
-    if (options.enrich === false) {
-      return [fallback];
+function getRiskScore(status) {
+  const scores = { Evacuate: 4, "Flood Confirmed": 3, "Risk Rising": 2, Warning: 1, Safe: 0 };
+  return scores[status] ?? 0;
+}
+
+function cleanAlertText(value) {
+  const text = compactText(value).toLowerCase();
+
+  if (!text || /\b(no data|tiada data|no alert|no warning)\b/i.test(text)) {
+    return "";
+  }
+
+  return text;
+}
+
+function estimateRiskFromAlerts(alerts) {
+  const { weather, officialNotice, publicInfobanjir } = alerts;
+  const relevantInfobanjirText = [
+    publicInfobanjir?.floodAlert?.hasRelevantText
+      ? publicInfobanjir.floodAlert.summary
+      : "",
+    publicInfobanjir?.metAlert?.hasRelevantText
+      ? publicInfobanjir.metAlert.summary
+      : "",
+    publicInfobanjir?.currentAlert?.hasRelevantText
+      ? publicInfobanjir.currentAlert.summary
+      : "",
+    publicInfobanjir?.siren?.hasRelevantText
+      ? publicInfobanjir.siren.summary
+      : "",
+  ]
+    .map(cleanAlertText)
+    .join(" ");
+  const weatherText = cleanAlertText(`${weather?.warning || ""} ${weather?.forecast || ""}`);
+  const officialText = cleanAlertText(officialNotice?.notice);
+  const combinedText = `${weatherText} ${officialText} ${relevantInfobanjirText}`;
+
+  if (/evacuat|pemindahan|pindah|siren\s+(aktif|active|dibunyikan)|danger level|paras bahaya|bahaya/i.test(combinedText)) {
+    return { status: "Flood Confirmed", action: "Evacuate immediately", reason: "A severe official flood, siren, or evacuation signal is active." };
+  }
+  if (/amaran banjir|flood warning|warning|amaran|severe|heavy|lebat|berterusan/i.test(combinedText)) {
+    return { status: "Warning", action: "Avoid low-lying areas and stay alert", reason: "Severe weather or heavy rain warning active." };
+  }
+  if (/thunderstorm|ribut|rain|hujan/i.test(combinedText)) {
+    return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "Thunderstorm or rain risk detected." };
+  }
+  return { status: "Safe", action: "No immediate action needed", reason: "No active flood or severe weather alerts." };
+}
+
+function computeCityRisk(city, district, state, rawStations, alerts) {
+  const cityTargets = unique([
+    city,
+    withoutCommonSuffixes(city),
+    ...getLocationAliases(city, district, state),
+  ]).map(normalize);
+  const directMatches = rawStations.filter(item => 
+    cityTargets.some(t => normalize(item.location) === t || normalize(item.stationName).includes(t))
+  );
+
+  if (directMatches.length > 0) {
+    directMatches.sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status));
+    const highestRisk = directMatches[0];
+    const stations = directMatches.map(s => ({
+      stationId: s.stationId, stationName: s.stationName, district: s.district,
+      waterLevel: s.waterLevel, thresholds: s.thresholds, status: s.status,
+      action: s.action, reason: s.reason, lastUpdate: s.lastUpdate
+    }));
+    
+    const baseItem = {
+      ...highestRisk,
+      location: city,
+      state,
+      district,
+      dataBasis: "jps-direct",
+      confidence: "high",
+      sourceNote: "Based on direct JPS water-level station.",
+      stations
+    };
+    if (stations.length > 1) {
+      baseItem.reason = `${stations.length} nearby stations monitored. Highest risk is ${highestRisk.status}.`;
+      baseItem.latestUpdate = {
+        type: "Aggregated JPS Data",
+        summary: `${stations.length} stations found in this area. ${highestRisk.stationName} reports ${highestRisk.status}.`
+      };
     }
-
-    return [await enrichWithOptionalSources(fallback, state, city)];
+    return baseItem;
   }
 
-  if (options.enrich === false) {
-    return [matches[0]];
-  }
+  const districtTargets = unique([district, withoutCommonSuffixes(district)]).map(normalize).filter(Boolean);
+  const nearbyMatches = rawStations.filter(item => 
+    districtTargets.some(t => normalize(item.district) === t || normalize(item.stationName).includes(t))
+  );
 
-  return [await enrichWithOptionalSources(matches[0], state, city)];
+  const stations = nearbyMatches.map(s => ({
+    stationId: s.stationId, stationName: s.stationName, district: s.district,
+    waterLevel: s.waterLevel, thresholds: s.thresholds, status: s.status,
+    action: s.action, reason: s.reason, lastUpdate: s.lastUpdate
+  }));
+  const highestNearby = nearbyMatches
+    .slice()
+    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
+  const hasNearbyJpsData = Boolean(highestNearby);
+  const hasStateJpsData = rawStations.length > 0;
+  const estimate = hasStateJpsData
+    ? {
+        status: "Safe",
+        action: "No immediate action needed",
+        reason:
+          "JPS water-level data is available for this state, but no matching nearby station is linked to this area. Weather and official alerts are monitored as supporting context.",
+      }
+    : estimateRiskFromAlerts(alerts);
+  const finalStatus = hasNearbyJpsData ? highestNearby.status : estimate.status;
+  const finalAction = hasNearbyJpsData ? highestNearby.action : estimate.action;
+  const finalReason = hasNearbyJpsData
+    ? highestNearby.status === "Safe"
+      ? "Nearby JPS water-level stations are currently below alert thresholds. Weather and official alerts are monitored as supporting context."
+      : highestNearby.reason
+    : estimate.reason;
+
+  const dataBasis = hasNearbyJpsData
+    ? "jps-nearby"
+    : hasStateJpsData
+      ? "jps-state-monitoring"
+      : "weather-estimated";
+  const sourceNote = nearbyMatches.length > 0 
+    ? "JPS water-level readings are the main flood signal. Weather and official alerts are supporting context."
+    : hasStateJpsData
+      ? "JPS water-level data exists for this state. This area has no linked station, so weather and official alerts are supporting context only."
+      : "Estimated from weather and official alerts because no JPS water-level data is available.";
+
+  return {
+    location: city,
+    state,
+    district,
+    status: finalStatus,
+    action: finalAction,
+    reason: finalReason,
+    latestUpdate: { type: hasNearbyJpsData ? "JPS Nearby Station" : "Estimated Risk", summary: finalReason },
+    lastUpdate: new Date().toISOString(),
+    stations,
+    dataBasis,
+    confidence: "medium",
+    sourceNote
+  };
+}
+
+async function getRawDataByCity(city, state, district = "", options = {}) {
+  const rawItems = await getAllRawData(state);
+  const weather = await fetchMetMalaysiaWeather(state, city);
+  const officialNotice = await fetchNadmaNotice(state, city);
+  const publicInfobanjir = await fetchPublicInfobanjirContext(state, city);
+  const alerts = { weather, officialNotice, publicInfobanjir };
+  
+  const computed = computeCityRisk(city, district, state, rawItems, alerts);
+  const satellite =
+    computed.dataBasis === "jps-state-monitoring" ||
+    computed.dataBasis === "weather-estimated"
+      ? await analyzeSatelliteFloodSignal({ location: city, district, state })
+      : null;
+  const satelliteAdjusted =
+    satellite?.hasFloodSignal && computed.status === "Safe"
+      ? {
+          status: "Warning",
+          action: "Avoid low-lying areas and stay alert",
+          reason:
+            "Satellite imagery suggests possible surface water near this area. JPS water-level data remains the main flood signal, so treat this as an early warning and check official updates.",
+          latestUpdate: {
+            type: "Satellite Imagery",
+            summary:
+              "Possible surface water detected by Sentinel-1 imagery. Use this as supporting context, not as a confirmed flood alert.",
+          },
+          dataBasis: "satellite-supporting",
+          confidence: "medium",
+        }
+      : {};
+  
+  const finalItem = {
+    ...computed,
+    ...satelliteAdjusted,
+    weather: alerts.weather || null,
+    officialNotice: alerts.officialNotice || null,
+    publicInfobanjir: alerts.publicInfobanjir || null,
+    satellite,
+  };
+  
+  finalItem.userSummary = buildUserSummary(finalItem);
+  if (satellite) {
+    finalItem.sourceNote = `${finalItem.sourceNote || "Based on the latest available flood monitoring data."} Satellite imagery was checked using Google Earth Engine Sentinel-1.`;
+  }
+  return [finalItem];
 }
 
 async function getRawDataByCityAndState(city, state) {
@@ -597,7 +828,27 @@ async function getRawDataByCityAndState(city, state) {
 }
 
 async function getRawDataByState(state) {
-  return getAllRawData(state);
+  const rawItems = await getAllRawData(state);
+  
+  // State-wide alerts for efficient fallback logic
+  const weather = await fetchMetMalaysiaWeather(state, state);
+  const officialNotice = await fetchNadmaNotice(state, state);
+  const publicInfobanjir = await fetchPublicInfobanjirContext(state, state);
+  const alerts = { weather, officialNotice, publicInfobanjir };
+
+  const districtsObj = MALAYSIA_LOCATION_DATA[state];
+  if (!districtsObj) {
+    return rawItems;
+  }
+
+  const computedCities = [];
+  for (const [districtName, cities] of Object.entries(districtsObj)) {
+    for (const cityName of cities) {
+      computedCities.push(computeCityRisk(cityName, districtName, state, rawItems, alerts));
+    }
+  }
+
+  return computedCities;
 }
 
 module.exports = {
