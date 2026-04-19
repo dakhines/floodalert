@@ -5,6 +5,7 @@ import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
 import { fetchLocationByName, getCachedLocationByName } from "../api/floodApi";
 import { findLocationPath } from "../data/locations";
+import { formatDisplayTime } from "../utils/floodStatus";
 
 function buildSummary(item) {
     if (item.latestUpdate) {
@@ -20,13 +21,6 @@ function buildSummary(item) {
     }
 
     return item.summary || item.message || "No update summary available.";
-}
-
-function formatTime(isoString) {
-    if (!isoString) return "";
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return isoString;
-    return date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function UpdateSkeleton() {
@@ -158,7 +152,7 @@ export default function LatestUpdates() {
                     currentDistrict,
                     { includeAi: true, force: true }
                 );
-                
+
                 if (data) {
                     if (data.updates && data.updates.length > 0) {
                         setUpdates(data.updates);
@@ -231,7 +225,7 @@ export default function LatestUpdates() {
                         ...item,
                         idKey: key,
                         summaryText: item.summary || buildSummary(item),
-                        displayTime: formatTime(item.timestamp || item.lastUpdate || item.time),
+                        displayTime: formatDisplayTime(item.timestamp || item.lastUpdate || item.time),
                         displaySource: item.source || item.sourceNote || item.officialNotice?.source || "Official update"
                     },
                 ];
@@ -257,11 +251,10 @@ export default function LatestUpdates() {
                 )}
 
                 {updatesError && (
-                    <p className={`rounded-xl border p-4 text-sm ${
-                        updates.length
+                    <p className={`rounded-xl border p-4 text-sm ${updates.length
                             ? "border-amber-200 bg-amber-50 text-amber-700"
                             : "border-red-200 bg-red-50 text-red-600"
-                    }`}>
+                        }`}>
                         {updatesError}
                     </p>
                 )}
