@@ -93,6 +93,7 @@ async function safelyAnalyzeLocation(location) {
             officialNotice: location.officialNotice,
             publicInfobanjir: location.publicInfobanjir,
             satellite: location.satellite,
+            updates: location.updates || [],
         };
     } catch (error) {
         if (error.message === "Gemini API key is invalid or missing.") {
@@ -116,6 +117,7 @@ async function safelyAnalyzeLocation(location) {
             sourceNote:
                 location.sourceNote ||
                 "Based on the latest available flood monitoring data.",
+            updates: location.updates || [],
         };
     }
 }
