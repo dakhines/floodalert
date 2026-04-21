@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
+import demoVideo from "../img/demoUse.mp4"; //video
 
 export default function HowToUse() {
     return (
@@ -23,8 +24,16 @@ export default function HowToUse() {
                 <p className="text-sm font-semibold leading-7 text-slate-700">
                     Stay alert. Stay prepared.
                 </p>
-                <div className="mt-5 flex h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm font-semibold text-slate-500">
-                    Demo video / instructions placeholder
+                <div className="mt-5 overflow-hidden rounded-xl border border-slate-300 bg-black">
+                    <video
+                        className="w-full h-full object-cover"
+                        controls
+                        playsInline
+                        preload="metadata"
+                    >
+                        <source src={demoVideo} type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
             </section>
 
