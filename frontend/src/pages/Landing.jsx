@@ -14,7 +14,7 @@ export default function Landing() {
         <AppShell className="flex flex-col items-center justify-center text-center">
             <img src={logo} alt="FloodGuard logo" className="h-40 w-40 object-contain" />
             <h1 className="text-2xl font-bold text-slate-950">
-                Welcome to FloodGuard
+                Welcome to FloodAlert
             </h1>
             <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
                 We Detect, You Act.

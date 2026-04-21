@@ -68,6 +68,20 @@ function compactText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function isGenericPortalText(value) {
+  const text = normalize(value);
+
+  if (!text) {
+    return true;
+  }
+
+  return (
+    /director general.?s message|hubungi kami|contact us|knowledge sharing|storage dam|services flood alert registration/i.test(text) ||
+    /observation|current alert|siren|forecast flood alert|weather alert/i.test(text) ||
+    /informasi bencana|mekanisme pengurusan bencana|bantuan wang ihsan/i.test(text)
+  );
+}
+
 function getLastUpdateFromText(text) {
   return compactText(text).match(/Last Update:\s*([^|]+)/i)?.[1]?.trim() || "";
 }
@@ -169,6 +183,30 @@ function buildSourceNote(item, optionalSources = {}) {
   return `Based on ${sources.join(", ")}.`;
 }
 
+function buildUpdatesFeed(item) {
+  const updates = [];
+
+  if (item?.latestUpdate?.summary) {
+    updates.push({
+      type: item.latestUpdate.type || "Update",
+      status: item.status || "Safe",
+      summary: item.latestUpdate.summary,
+      lastUpdate: item.lastUpdate || "",
+    });
+  }
+
+  if (item?.officialNotice?.notice) {
+    updates.push({
+      type: item.officialNotice.source || "Official notice",
+      status: item.status || "Safe",
+      summary: item.officialNotice.notice,
+      lastUpdate: item.officialNotice.lastUpdate || item.lastUpdate || "",
+    });
+  }
+
+  return updates;
+}
+
 function extractRows(payload) {
   if (Array.isArray(payload)) {
     return payload;
@@ -226,7 +264,193 @@ async function fetchPageText(url) {
   });
   const $ = cheerio.load(response.data);
 
-  $("script, style, noscript").remove();
+  $("script, style, noscript, nav, header, footer, .menu, #menu, .sidebar, .navbar").remove();
+  return compactText($("body").text());
+}
+
+function getLastUpdateFromText(text) {
+  return compactText(text).match(/Last Update:\s*([^|]+)/i)?.[1]?.trim() || "";
+}
+
+function getRelevantText(text, terms, maxLength = 260) {
+  const normalizedText = compactText(text);
+  const normalizedTerms = terms.map(normalize).filter(Boolean);
+  const lowerText = normalize(normalizedText);
+  const matchIndex = normalizedTerms
+    .map((term) => lowerText.indexOf(term))
+    .filter((index) => index >= 0)
+    .sort((a, b) => a - b)[0];
+  const start = matchIndex >= 0 ? Math.max(0, matchIndex - 80) : 0;
+
+  return normalizedText.slice(start, start + maxLength).trim();
+}
+
+function mapStatusFromThresholds(waterLevel, thresholds) {
+  if (
+    thresholds.danger !== null &&
+    waterLevel !== null &&
+    waterLevel >= thresholds.danger
+  ) {
+    return "Flood Confirmed";
+  }
+
+  if (
+    thresholds.warning !== null &&
+    waterLevel !== null &&
+    waterLevel >= thresholds.warning
+  ) {
+    return "Warning";
+  }
+
+  if (
+    thresholds.alert !== null &&
+    waterLevel !== null &&
+    waterLevel >= thresholds.alert
+  ) {
+    return "Risk Rising";
+  }
+
+  return "Safe";
+}
+
+function mapAction(status) {
+  if (status === "Flood Confirmed") return "Evacuate immediately";
+  if (status === "Risk Rising") return "Prepare essentials and monitor updates";
+  if (status === "Warning") return "Avoid low-lying areas and stay alert";
+  return "No immediate action needed";
+}
+
+function getRiskLabel(status) {
+  if (status === "Flood Confirmed") return "Danger";
+  if (status === "Warning") return "Warning";
+  if (status === "Risk Rising") return "Alert";
+  return "Normal";
+}
+
+function buildUserSummary(item) {
+  const locationName = item.location || item.district || "this area";
+
+  if (item.status === "Safe") {
+    return `${locationName} is currently marked Safe. No immediate action is needed, but keep checking updates if heavy rain continues.`;
+  }
+
+  return `${locationName} is currently marked ${item.status}. ${item.action || "Follow official guidance and monitor updates."}`;
+}
+
+function buildSourceNote(item, optionalSources = {}) {
+  const sources = [];
+  const hasInfobanjirContent = Boolean(
+    optionalSources.publicInfobanjir?.floodAlert?.summary ||
+      optionalSources.publicInfobanjir?.metAlert?.summary ||
+      optionalSources.publicInfobanjir?.currentAlert?.summary ||
+      optionalSources.publicInfobanjir?.siren?.summary
+  );
+
+  if (item.stationName || item.waterLevel !== null) {
+    sources.push("live JPS water-level data");
+  }
+
+  if (optionalSources.weather?.forecast || optionalSources.weather?.warning) {
+    sources.push("METMalaysia or Public Infobanjir weather alerts");
+  }
+
+  if (optionalSources.officialNotice?.notice) {
+    sources.push("NADMA official notices");
+  }
+
+  if (hasInfobanjirContent) {
+    sources.push("Public Infobanjir notices");
+  }
+
+  if (sources.length === 0) {
+    return "Based on the latest available flood monitoring data.";
+  }
+
+  return `Based on ${sources.join(", ")}.`;
+}
+
+function buildUpdatesFeed(item) {
+  const updates = [];
+
+  if (item?.latestUpdate?.summary) {
+    updates.push({
+      type: item.latestUpdate.type || "Update",
+      status: item.status || "Safe",
+      summary: item.latestUpdate.summary,
+      lastUpdate: item.lastUpdate || "",
+    });
+  }
+
+  if (item?.officialNotice?.notice) {
+    updates.push({
+      type: item.officialNotice.source || "Official notice",
+      status: item.status || "Safe",
+      summary: item.officialNotice.notice,
+      lastUpdate: item.officialNotice.lastUpdate || item.lastUpdate || "",
+    });
+  }
+
+  return updates;
+}
+
+function extractRows(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload?.aaData)) {
+    return payload.aaData;
+  }
+
+  if (typeof payload === "string") {
+    const $ = cheerio.load(payload);
+    const rows = [];
+
+    $("table tr").each((_, tr) => {
+      const cells = $(tr)
+        .find("td")
+        .map((__, td) => $(td).text().replace(/\s+/g, " ").trim())
+        .get();
+
+      if (cells.length >= 12) {
+        rows.push(cells);
+      }
+    });
+
+    return rows;
+  }
+
+  return [];
+}
+
+async function fetchJpsWaterLevelRows(stateCode) {
+  const url = `https://publicinfobanjir.water.gov.my/aras-air/aras-air-data/?state=${encodeURIComponent(stateCode)}&district=ALL&station=ALL&lang=en`;
+  const response = await axios.get(url, {
+    timeout: 15000,
+    headers: {
+      "User-Agent": "Mozilla/5.0 FloodAlert/1.0",
+      Accept: "application/json,text/html;q=0.9,*/*;q=0.8",
+    },
+  });
+
+  return extractRows(response.data);
+}
+
+async function fetchPageText(url) {
+  const response = await axios.get(url, {
+    timeout: 10000,
+    headers: {
+      "User-Agent": "Mozilla/5.0 FloodAlert/1.0",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    },
+  });
+  const $ = cheerio.load(response.data);
+
+  $("script, style, noscript, nav, header, footer, .menu, #menu, .sidebar, #sidebar, .navbar").remove();
   return compactText($("body").text());
 }
 
@@ -234,16 +458,28 @@ async function fetchInfobanjirSnapshot(sourceName, url, state, location) {
   try {
     const text = await fetchPageText(url);
     const terms = [location, state, "No Data", "Amaran", "Alert", "Flood", "Siren"];
+    const normalizedText = normalize(text);
+    const hasLocationMention =
+      Boolean(normalize(location)) &&
+      normalizedText.includes(normalize(location));
+    const hasStateMention =
+      Boolean(normalize(state)) && normalizedText.includes(normalize(state));
+    const hasAlertSignal =
+      /banjir|flood|warning|amaran|evacuat|pemindahan|hujan|rain|ribut|storm|paras|siren/i.test(
+        normalizedText
+      );
+    const hasRelevantText =
+      hasAlertSignal &&
+      !isGenericPortalText(text) &&
+      (hasLocationMention || hasStateMention);
 
     return {
       source: "Public Infobanjir",
       type: sourceName,
       url,
-      summary: getRelevantText(text, terms),
+      summary: hasRelevantText ? getRelevantText(text, terms) : "",
       lastUpdate: getLastUpdateFromText(text),
-      hasRelevantText: [location, state].some((term) =>
-        normalize(text).includes(normalize(term))
-      ),
+      hasRelevantText,
     };
   } catch (error) {
     console.error(`${sourceName} fetch failed:`, error.message);
@@ -632,14 +868,38 @@ function unique(values) {
 }
 
 function getRiskScore(status) {
-  const scores = { Evacuate: 4, "Flood Confirmed": 3, "Risk Rising": 2, Warning: 1, Safe: 0 };
+  const scores = { Evacuate: 4, "Flood Confirmed": 3, Warning: 2, "Risk Rising": 1, Safe: 0 };
   return scores[status] ?? 0;
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function stationMatchesCityTarget(stationName, target) {
+  const normalizedStation = normalize(stationName);
+  const normalizedTarget = normalize(target);
+
+  if (!normalizedStation || !normalizedTarget) {
+    return false;
+  }
+
+  if (normalizedStation === normalizedTarget) {
+    return true;
+  }
+
+  const boundaryPattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(normalizedTarget)}([^a-z0-9]|$)`, "i");
+  return boundaryPattern.test(normalizedStation);
 }
 
 function cleanAlertText(value) {
   const text = compactText(value).toLowerCase();
 
-  if (!text || /\b(no data|tiada data|no alert|no warning)\b/i.test(text)) {
+  if (
+    !text ||
+    /\b(no data|tiada data|no alert|no warning)\b/i.test(text) ||
+    isGenericPortalText(text)
+  ) {
     return "";
   }
 
@@ -666,18 +926,70 @@ function estimateRiskFromAlerts(alerts) {
     .join(" ");
   const weatherText = cleanAlertText(`${weather?.warning || ""} ${weather?.forecast || ""}`);
   const officialText = cleanAlertText(officialNotice?.notice);
-  const combinedText = `${weatherText} ${officialText} ${relevantInfobanjirText}`;
+  const officialFloodText = `${officialText} ${relevantInfobanjirText}`;
+  const combinedText = `${weatherText} ${officialFloodText}`;
 
   if (/evacuat|pemindahan|pindah|siren\s+(aktif|active|dibunyikan)|danger level|paras bahaya|bahaya/i.test(combinedText)) {
     return { status: "Flood Confirmed", action: "Evacuate immediately", reason: "A severe official flood, siren, or evacuation signal is active." };
   }
-  if (/amaran banjir|flood warning|warning|amaran|severe|heavy|lebat|berterusan/i.test(combinedText)) {
-    return { status: "Warning", action: "Avoid low-lying areas and stay alert", reason: "Severe weather or heavy rain warning active." };
+  if (/amaran banjir|flood warning|current alert|official flood|banjir/i.test(officialFloodText)) {
+    return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "An official flood-related alert is active." };
   }
-  if (/thunderstorm|ribut|rain|hujan/i.test(combinedText)) {
-    return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "Thunderstorm or rain risk detected." };
+  if (/warning|amaran|severe|heavy|lebat|berterusan|thunderstorm|ribut|rain|hujan/i.test(weatherText)) {
+    return { status: "Safe", action: "No immediate action needed", reason: "Weather risk is being monitored, but no official flood confirmation is active." };
   }
+
   return { status: "Safe", action: "No immediate action needed", reason: "No active flood or severe weather alerts." };
+}
+
+function getContextOnlyRisk(alerts, nearbyMatches = []) {
+  const estimate = estimateRiskFromAlerts(alerts);
+  const elevatedNearby = nearbyMatches.filter((item) => getRiskScore(item.status) >= getRiskScore("Risk Rising"));
+  const hasElevatedNearby = elevatedNearby.length > 0;
+  const hasStrongSupportingSignals =
+    estimate.status === "Risk Rising" || estimate.status === "Flood Confirmed";
+
+  const reasons = [];
+
+  if (hasElevatedNearby) {
+    reasons.push(
+      `${elevatedNearby.length} nearby district station${elevatedNearby.length > 1 ? "s are" : " is"} elevated`
+    );
+  }
+
+  if (hasStrongSupportingSignals) {
+    reasons.push(estimate.reason);
+  }
+
+  if (estimate.status === "Flood Confirmed") {
+    return {
+      status: "Flood Confirmed",
+      action: "Evacuate immediately",
+      reason:
+        reasons.length > 0
+            ? `No direct JPS station is linked to this area. Strong official confirmation detected: ${reasons.join(". ")}.`
+            : "No direct JPS station is linked to this area, but strong official flood confirmation is active.",
+      };
+  }
+
+  if (estimate.status === "Risk Rising") {
+      return {
+        status: "Risk Rising",
+        action: "Prepare essentials and monitor updates",
+        reason:
+          reasons.length > 0
+          ? `No direct JPS station is linked to this area. Supporting context indicates rising risk: ${reasons.join(". ")}.`
+            : "No direct JPS station is linked to this area, but supporting context indicates rising risk nearby.",
+      };
+  }
+
+  return {
+    status: "Safe",
+    action: "No immediate action needed",
+    reason: reasons.length > 0
+      ? `No direct JPS station is linked to this area. Main status remains Safe. Supporting context: ${reasons.join(". ")}.`
+      : "No direct JPS station is linked to this area. Nearby district stations are being monitored as supporting context, and the supporting weather and official signals remain calm.",
+  };
 }
 
 function computeCityRisk(city, district, state, rawStations, alerts) {
@@ -686,19 +998,40 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     withoutCommonSuffixes(city),
     ...getLocationAliases(city, district, state),
   ]).map(normalize);
-  const directMatches = rawStations.filter(item => 
-    cityTargets.some(t => normalize(item.location) === t || normalize(item.stationName).includes(t))
+  const districtTargets = unique([
+    district,
+    withoutCommonSuffixes(district),
+    city,
+    withoutCommonSuffixes(city),
+  ])
+    .map(normalize)
+    .filter(Boolean);
+  const nearbyMatches = rawStations.filter((item) =>
+    districtTargets.some((target) => normalize(item.district) === target)
+  );
+  const highestNearby = nearbyMatches
+    .slice()
+    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
+
+  const directMatches = rawStations.filter((item) =>
+    cityTargets.some((target) => stationMatchesCityTarget(item.stationName, target))
   );
 
   if (directMatches.length > 0) {
     directMatches.sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status));
     const highestRisk = directMatches[0];
-    const stations = directMatches.map(s => ({
-      stationId: s.stationId, stationName: s.stationName, district: s.district,
-      waterLevel: s.waterLevel, thresholds: s.thresholds, status: s.status,
-      action: s.action, reason: s.reason, lastUpdate: s.lastUpdate
+    const stations = directMatches.map((s) => ({
+      stationId: s.stationId,
+      stationName: s.stationName,
+      district: s.district,
+      waterLevel: s.waterLevel,
+      thresholds: s.thresholds,
+      status: s.status,
+      action: s.action,
+      reason: s.reason,
+      lastUpdate: s.lastUpdate,
     }));
-    
+
     const baseItem = {
       ...highestRisk,
       location: city,
@@ -707,46 +1040,63 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
       dataBasis: "jps-direct",
       confidence: "high",
       sourceNote: "Based on direct JPS water-level station.",
-      stations
+      stations,
     };
+
     if (stations.length > 1) {
       baseItem.reason = `${stations.length} nearby stations monitored. Highest risk is ${highestRisk.status}.`;
       baseItem.latestUpdate = {
         type: "Aggregated JPS Data",
-        summary: `${stations.length} stations found in this area. ${highestRisk.stationName} reports ${highestRisk.status}.`
+        summary: `${stations.length} stations found in this area. ${highestRisk.stationName} reports ${highestRisk.status}.`,
       };
     }
+
+    if (
+      highestNearby &&
+      getRiskScore(highestNearby.status) > getRiskScore(baseItem.status)
+    ) {
+      return {
+        ...baseItem,
+        status: highestNearby.status,
+        action: highestNearby.action,
+        reason: highestNearby.reason,
+        latestUpdate: {
+          type: "District JPS Monitoring",
+          summary: `${nearbyMatches.length} nearby district station${nearbyMatches.length > 1 ? "s" : ""} monitored. Highest nearby status is ${highestNearby.status}.`,
+        },
+        lastUpdate: highestNearby.lastUpdate || baseItem.lastUpdate,
+        dataBasis: "jps-direct+district",
+      };
+    }
+
     return baseItem;
   }
 
-  const districtTargets = unique([district, withoutCommonSuffixes(district)]).map(normalize).filter(Boolean);
-  const nearbyMatches = rawStations.filter(item => 
-    districtTargets.some(t => normalize(item.district) === t || normalize(item.stationName).includes(t))
-  );
-
-  const stations = nearbyMatches.map(s => ({
-    stationId: s.stationId, stationName: s.stationName, district: s.district,
-    waterLevel: s.waterLevel, thresholds: s.thresholds, status: s.status,
-    action: s.action, reason: s.reason, lastUpdate: s.lastUpdate
+  const stations = nearbyMatches.map((s) => ({
+    stationId: s.stationId,
+    stationName: s.stationName,
+    district: s.district,
+    waterLevel: s.waterLevel,
+    thresholds: s.thresholds,
+    status: s.status,
+    action: s.action,
+    reason: s.reason,
+    lastUpdate: s.lastUpdate,
   }));
-  const highestNearby = nearbyMatches
-    .slice()
-    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
   const hasNearbyJpsData = Boolean(highestNearby);
   const hasStateJpsData = rawStations.length > 0;
   const estimate = hasStateJpsData
-    ? {
-        status: "Safe",
-        action: "No immediate action needed",
-        reason:
-          "JPS water-level data is available for this state, but no matching nearby station is linked to this area. Weather and official alerts are monitored as supporting context.",
-      }
+    ? getContextOnlyRisk(alerts, nearbyMatches)
     : estimateRiskFromAlerts(alerts);
+  const nearbyContextSummary = hasNearbyJpsData
+    ? `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored. Highest nearby status is ${highestNearby.status}.`
+    : estimate.reason;
+
   const finalStatus = hasNearbyJpsData ? highestNearby.status : estimate.status;
   const finalAction = hasNearbyJpsData ? highestNearby.action : estimate.action;
   const finalReason = hasNearbyJpsData
     ? highestNearby.status === "Safe"
-      ? "Nearby JPS water-level stations are currently below alert thresholds. Weather and official alerts are monitored as supporting context."
+      ? "Nearby district JPS stations are currently below alert thresholds."
       : highestNearby.reason
     : estimate.reason;
 
@@ -755,8 +1105,8 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     : hasStateJpsData
       ? "jps-state-monitoring"
       : "weather-estimated";
-  const sourceNote = nearbyMatches.length > 0 
-    ? "JPS water-level readings are the main flood signal. Weather and official alerts are supporting context."
+  const sourceNote = nearbyMatches.length > 0
+    ? "JPS water-level readings are the main flood signal. Nearby district stations are supporting context for areas without a direct station."
     : hasStateJpsData
       ? "JPS water-level data exists for this state. This area has no linked station, so weather and official alerts are supporting context only."
       : "Estimated from weather and official alerts because no JPS water-level data is available.";
@@ -768,17 +1118,23 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     status: finalStatus,
     action: finalAction,
     reason: finalReason,
-    latestUpdate: { type: hasNearbyJpsData ? "JPS Nearby Station" : "Estimated Risk", summary: finalReason },
-    lastUpdate: new Date().toISOString(),
+    latestUpdate: {
+      type: hasNearbyJpsData
+        ? "District JPS Monitoring"
+        : hasStateJpsData
+          ? "State Monitoring"
+          : "Estimated Risk",
+      summary: nearbyContextSummary,
+    },
+    lastUpdate: highestNearby?.lastUpdate || new Date().toISOString(),
     stations,
     dataBasis,
     confidence: "medium",
-    sourceNote
+    sourceNote,
   };
 }
 
 async function getRawDataByCity(city, state, district = "", options = {}) {
-    let jpsData = null;
   const rawItems = await getAllRawData(state);
   const weather = await fetchMetMalaysiaWeather(state, city);
   const officialNotice = await fetchNadmaNotice(state, city);
@@ -791,35 +1147,25 @@ async function getRawDataByCity(city, state, district = "", options = {}) {
     computed.dataBasis === "weather-estimated"
       ? await analyzeSatelliteFloodSignal({ location: city, district, state })
       : null;
-  const satelliteAdjusted =
-    satellite?.hasFloodSignal && computed.status === "Safe"
-      ? {
-          status: "Warning",
-          action: "Avoid low-lying areas and stay alert",
-          reason:
-            "Satellite imagery suggests possible surface water near this area. JPS water-level data remains the main flood signal, so treat this as an early warning and check official updates.",
-          latestUpdate: {
-            type: "Satellite Imagery",
-            summary:
-              "Possible surface water detected by Sentinel-1 imagery. Use this as supporting context, not as a confirmed flood alert.",
-          },
-          dataBasis: "satellite-supporting",
-          confidence: "medium",
-        }
-      : {};
-  
+  const satelliteAdjusted = {};
+
   const finalItem = {
-    location: city,
-    district: district || "Not specified",
-    state: state || "Not specified",
-    jps: jpsData || null,
+    ...computed,
+    ...satelliteAdjusted,
     weather: alerts.weather || null,
     officialNotice: alerts.officialNotice || null,
     publicInfobanjir: alerts.publicInfobanjir || null,
-    satellite: satellite || null, 
-    rawComputedStatus: jpsData ? jpsData.status : (satellite?.hasFloodSignal ? "Satellite Detected" : "Safe")
+    satellite: satellite || null,
   };
-  
+
+  finalItem.userSummary = buildUserSummary(finalItem);
+  finalItem.sourceNote = buildSourceNote(finalItem, {
+    weather: finalItem.weather,
+    officialNotice: finalItem.officialNotice,
+    publicInfobanjir: finalItem.publicInfobanjir,
+  });
+  finalItem.updates = buildUpdatesFeed(finalItem);
+
   return [finalItem];
 }
 

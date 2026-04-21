@@ -5,7 +5,7 @@ import { useAuth } from "../context/useAuth";
 import { useViewLocation } from "../context/useViewLocation";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
-import { fetchLocations } from "../api/floodApi";
+import { fetchLocationByName, fetchLocations } from "../api/floodApi";
 import { findLocationPath, MALAYSIA_LOCATION_DATA } from "../data/locations";
 import { getLocationAliases } from "../data/locationAliases";
 import { getStatusClasses } from "../utils/floodStatus";
@@ -54,12 +54,14 @@ export default function AllLocations() {
         setViewingLocation,
     } = useViewLocation();
     const [locations, setLocations] = useState([]);
+    const [locationDetails, setLocationDetails] = useState({});
     const [locationsLoading, setLocationsLoading] = useState(true);
     const [locationsError, setLocationsError] = useState("");
 
     useEffect(() => {
         if (!selectedState) {
             setLocations([]);
+            setLocationDetails({});
             setLocationsLoading(false);
             setLocationsError("");
             return;
@@ -71,11 +73,66 @@ export default function AllLocations() {
             try {
                 setLocationsLoading(true);
                 setLocationsError("");
+
                 const data = await fetchLocations(selectedState, controller.signal);
                 setLocations(data);
+
+                if (!selectedDistrict) {
+                    setLocationDetails({});
+                    return;
+                }
+
+                const districtCities =
+                    MALAYSIA_LOCATION_DATA[selectedState]?.[selectedDistrict] || [];
+
+                if (districtCities.length === 0) {
+                    setLocationDetails({});
+                    return;
+                }
+
+                const detailedLocations = await Promise.all(
+                    districtCities.map(async (city) => {
+                        try {
+                            const detail = await fetchLocationByName(
+                                city,
+                                selectedState,
+                                controller.signal,
+                                selectedDistrict,
+                                { includeAi: false, force: true }
+                            );
+
+                            return [city, detail];
+                        } catch (detailError) {
+                            const fallback = data.find((item) => {
+                                const itemNames = [
+                                    item.location,
+                                    item.city,
+                                    item.name,
+                                    item.stationName,
+                                ].map(normalize);
+                                const targets = getLocationAliases(
+                                    city,
+                                    selectedDistrict,
+                                    selectedState
+                                )
+                                    .map(normalize)
+                                    .filter(Boolean);
+
+                                return targets.some((target) =>
+                                    itemNames.includes(target)
+                                );
+                            });
+
+                            return [city, fallback || null];
+                        }
+                    })
+                );
+
+                setLocationDetails(Object.fromEntries(detailedLocations));
             } catch (error) {
                 if (error.name !== "AbortError") {
                     setLocations([]);
+                    setLocationDetails({});
                     setLocationsError("Unable to load locations.");
                 }
             } finally {
@@ -86,11 +143,15 @@ export default function AllLocations() {
         loadLocations();
 
         return () => controller.abort();
-    }, [selectedState]);
+    }, [selectedDistrict, selectedState]);
 
     const states = useMemo(() => Object.keys(MALAYSIA_LOCATION_DATA), []);
 
     const findStatusItem = (city) => {
+        if (locationDetails[city]) {
+            return locationDetails[city];
+        }
+
         const targets = getLocationAliases(city, selectedDistrict, selectedState)
             .map(normalize)
             .filter(Boolean);
@@ -100,7 +161,7 @@ export default function AllLocations() {
                 item.location,
                 item.city,
                 item.name,
-                item.district,
+                item.stationName,
             ].map(normalize);
 
             return targets.some((target) => itemNames.includes(target));
@@ -200,9 +261,7 @@ export default function AllLocations() {
             </select>
 
             <section className="mt-5 space-y-3">
-                {locationsLoading && (
-                    <LocationRowSkeleton />
-                )}
+                {locationsLoading && <LocationRowSkeleton />}
 
                 {locationsError && (
                     <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
