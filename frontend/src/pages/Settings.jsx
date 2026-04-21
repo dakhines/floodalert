@@ -73,6 +73,14 @@ export default function Settings() {
 
             <div className="mt-4 space-y-3">
                 <Link
+                    to="/status-guide"
+                    className="flex items-center justify-between rounded-xl border border-slate-300 px-4 py-4 text-sm font-bold text-slate-950
+                               hover:border-sky-300"
+                >
+                    Flood Status Guide
+                    <span>&gt;</span>
+                </Link>
+                <Link
                     to="/how-to-use"
                     className="flex items-center justify-between rounded-xl border border-slate-300 px-4 py-4 text-sm font-bold text-slate-950
                                hover:border-sky-300"
