@@ -1,9 +1,9 @@
 export const STATUS_STYLES = {
-    Safe: "bg-green-600 border-green-900/25 text-white",
-    "Risk Rising": "bg-yellow-400 border-yellow-700/25 text-slate-950",
-    Warning: "bg-orange-500 border-orange-900/25 text-white",
-    "Flood Confirmed": "bg-red-600 border-red-900/25 text-white",
     Evacuate: "bg-red-900 border-red-900/25 text-white",
+    "Flood Confirmed": "bg-red-500 border-red-900/25 text-white",
+    Warning: "bg-orange-500 border-orange-900/25 text-white",
+    "Risk Rising": "bg-amber-500 border-amber-900/25 text-white",
+    Safe: "bg-green-600 border-green-900/25 text-white",
 };
 
 export function getStatusClasses(status) {

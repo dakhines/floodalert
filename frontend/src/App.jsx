@@ -15,7 +15,6 @@ import ResetPassword from "./pages/ResetPassword";
 import Settings from "./pages/Settings";
 import EditProfile from "./pages/EditProfile";
 import HowToUse from "./pages/HowToUse";
-import StatusGuide from "./pages/StatusGuide";
 import ReportProblem from "./pages/ReportProblem";
 import ChangeUsername from "./pages/ChangeUsername";
 import ChangeEmail from "./pages/ChangeEmail";
@@ -100,14 +99,6 @@ function AppRoutes() {
                         element={
                             <ProtectedRoute>
                                 <HowToUse />
-                            </ProtectedRoute>
-                        }
-                    />
-                    <Route
-                        path="/status-guide"
-                        element={
-                            <ProtectedRoute>
-                                <StatusGuide />
                             </ProtectedRoute>
                         }
                     />

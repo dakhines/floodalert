@@ -30,33 +30,52 @@ function getModel(modelName) {
   return genAI.getGenerativeModel({
     model: modelName,
     systemInstruction: [
-      "You are a flood risk analysis assistant.",
-      "Analyze structured flood source data and return frontend-ready flood status JSON.",
-      "Use the backend computed status/action/reason as the source of truth.",
-      "Priority order: JPS water-level data first, then Public Infobanjir official flood/current alerts, then METMalaysia weather as supporting context, then NADMA as official confirmation/context.",
-      "Use this severity ladder only: Safe, Risk Rising, Warning, Flood Confirmed, Evacuate.",
-      "Do not escalate a Safe JPS water-level status just because weather mentions rain.",
-      "Do not invent unavailable official warnings or disaster notices.",
-      "Write for normal app users. Keep the wording clear, calm, short, and action-focused. Prioritize user safety without causing panic.",
-      "Do not include raw threshold tables, station IDs, or internal source details unless they directly help the user understand what to do.",
-      "MUST return ONLY JSON.",
-      'The JSON must match this shape: {"status":"Safe | Risk Rising | Warning | Flood Confirmed | Evacuate","action":"string","reason":"string","latestUpdate":{"type":"string","summary":"string"},"lastUpdate":"string","userSummary":"string","sourceNote":"string"}',
-    ].join(" "),
+     "You are the AWAS AI Flood Risk Analyst.",
+      "Your task is to analyze flood data and provide safe, calm, and accurate summaries for residents.",
+      
+      "Follow this priority order strictly:",
+      "1. JPS Water Level (Highest priority for current status)",
+      "2. Official alerts from NADMA or Public Infobanjir (Highest priority for action advice)",
+      "3. Satellite imagery (Supporting evidence only)",
+      "4. Weather forecast (Supporting context only)",
+
+      "CORE RULES:",
+      "- Do NOT say 'Evacuate' unless the official backend status or NADMA explicitly supports it.",
+      "- Do NOT invent or 'hallucinate' warnings that are not in the input data.",
+      "- Treat satellite data as supporting evidence; do NOT confirm a flood based on satellite alone.",
+      "- If data is missing or incomplete, use safe, neutral wording like 'Data currently unavailable'.",
+      "- Tone: Short, user-friendly, and calm. No technical jargon (e.g., mS/cm) or scary wording unless necessary for safety.",
+      "- Always advise users to follow official instructions during serious alerts.",
+
+      "You MUST return ONLY a JSON object with this exact shape:",
+
+      JSON.stringify({
+        status: "Safe | Risk Rising | Warning | Flood Confirmed | Evacuate",
+        action: "Short, clear instruction for the user",
+        reason: "Brief technical justification",
+        latestUpdate: {
+          type: "Source name (e.g., JPS, NADMA, Satellite)",
+          summary: "Short summary of that specific update"
+        },
+        lastUpdate: "Current time in HH:MM AM/PM format",
+        userSummary: "One or two sentence explanation a normal resident can understand.",
+        sourceNote: "Note about which data sources were used for this result."
+      })
+    ].join("\n"),
   });
 }
 
 async function analyzeLocation(rawData) {
   const prompt = [
-    "Analyze this raw flood data and produce the required JSON output.",
-    "Keep the status and action aligned with the backend computed status/action unless official flood alert data clearly supports the same or higher risk.",
-    "Use userSummary for a one or two sentence explanation that a resident can understand quickly.",
-    "Use sourceNote to briefly say what the result is based on, such as live water-level data, weather alerts, official notices, or no active official alert.",
-    "Raw data:",
+    "Analyze the following raw data and produce the required JSON output following your priority and safety rules.",
+    "Raw data input:",
     JSON.stringify(rawData),
   ].join("\n");
+
   const modelCandidates = workingModelName
     ? [workingModelName]
     : getModelCandidates();
+
   let lastError = null;
 
   for (const modelName of modelCandidates) {
@@ -71,8 +90,10 @@ async function analyzeLocation(rawData) {
         ],
         generationConfig: {
           responseMimeType: "application/json",
+          temperature: 0.1,
         },
       });
+
       const text = result.response.text();
 
       workingModelName = modelName;
