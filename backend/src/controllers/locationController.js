@@ -4,6 +4,17 @@ const {
 } = require("../services/rawDataService");
 const { analyzeLocation } = require("../services/aiService");
 
+function isAiAuthIssue(error) {
+    const message = String(error?.message || "");
+
+    return (
+        message.includes("Gemini API key is invalid or missing") ||
+        message.includes("401") ||
+        message.includes("Unauthorized") ||
+        message.includes("invalid authentication credentials")
+    );
+}
+
 function buildAiInput(location) {
     return {
         weatherAlert:
@@ -95,10 +106,14 @@ async function safelyAnalyzeLocation(location) {
             satellite: location.satellite,
         };
     } catch (error) {
-        if (error.message === "Gemini API key is invalid or missing.") {
-            console.error("AI analysis failed:", error.message);
+        if (isAiAuthIssue(error)) {
+            console.warn(
+                "AI analysis unavailable. Using rule-based flood summary instead."
+            );
         } else {
-            console.error("AI analysis failed:", error.message);
+            console.warn(
+                `AI analysis unavailable. Using rule-based flood summary instead. (${error.message})`
+            );
         }
         return {
             ...location,

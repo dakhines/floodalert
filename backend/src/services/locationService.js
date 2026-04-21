@@ -2,6 +2,17 @@ const mockLocations = require("../data/mockLocations.json");
 const { getRawDataByCity } = require("./rawDataService");
 const { analyzeLocation } = require("./aiService");
 
+function isAiAuthIssue(error) {
+  const message = String(error?.message || "");
+
+  return (
+    message.includes("Gemini API key is invalid or missing") ||
+    message.includes("401") ||
+    message.includes("Unauthorized") ||
+    message.includes("invalid authentication credentials")
+  );
+}
+
 function getAllLocations() {
   return mockLocations;
 }
@@ -36,7 +47,11 @@ async function getLocationStatusWithAI(name) {
       rawData: contextData // Optional: for debugging
     };
   } catch (error) {
-    console.error(`AI Analysis failed for ${name}:`, error);
+    if (isAiAuthIssue(error)) {
+      console.warn(`AI summary unavailable for ${name}. Using live rule-based data instead.`);
+    } else {
+      console.warn(`AI summary unavailable for ${name}: ${error.message}`);
+    }
     // Fallback: return basic info if AI fails
     return null;
   }

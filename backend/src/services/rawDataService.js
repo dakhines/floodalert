@@ -12,6 +12,7 @@ const INFOBANJIR_SOURCES = {
     "https://publicinfobanjir.water.gov.my/cerapan/amaran-semasa/?lang=en",
   siren: "https://publicinfobanjir.water.gov.my/cerapan/siren/?lang=en",
 };
+const OPTIONAL_INFOBANJIR_SOURCES = new Set(["siren"]);
 const NADMA_DISASTER_INFO_URL = "https://www.nadma.gov.my/bm/#informasi-bencana";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const WEATHER_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1000;
@@ -155,9 +156,9 @@ function buildSourceNote(item, optionalSources = {}) {
   const sources = [];
   const hasInfobanjirContent = Boolean(
     optionalSources.publicInfobanjir?.floodAlert?.summary ||
-      optionalSources.publicInfobanjir?.metAlert?.summary ||
-      optionalSources.publicInfobanjir?.currentAlert?.summary ||
-      optionalSources.publicInfobanjir?.siren?.summary
+    optionalSources.publicInfobanjir?.metAlert?.summary ||
+    optionalSources.publicInfobanjir?.currentAlert?.summary ||
+    optionalSources.publicInfobanjir?.siren?.summary
   );
 
   if (item.stationName || item.waterLevel !== null) {
@@ -341,9 +342,9 @@ function buildSourceNote(item, optionalSources = {}) {
   const sources = [];
   const hasInfobanjirContent = Boolean(
     optionalSources.publicInfobanjir?.floodAlert?.summary ||
-      optionalSources.publicInfobanjir?.metAlert?.summary ||
-      optionalSources.publicInfobanjir?.currentAlert?.summary ||
-      optionalSources.publicInfobanjir?.siren?.summary
+    optionalSources.publicInfobanjir?.metAlert?.summary ||
+    optionalSources.publicInfobanjir?.currentAlert?.summary ||
+    optionalSources.publicInfobanjir?.siren?.summary
   );
 
   if (item.stationName || item.waterLevel !== null) {
@@ -455,6 +456,10 @@ async function fetchPageText(url) {
 }
 
 async function fetchInfobanjirSnapshot(sourceName, url, state, location) {
+  if (OPTIONAL_INFOBANJIR_SOURCES.has(sourceName)) {
+    return null;
+  }
+
   try {
     const text = await fetchPageText(url);
     const terms = [location, state, "No Data", "Amaran", "Alert", "Flood", "Siren"];
@@ -482,7 +487,7 @@ async function fetchInfobanjirSnapshot(sourceName, url, state, location) {
       hasRelevantText,
     };
   } catch (error) {
-    console.error(`${sourceName} fetch failed:`, error.message);
+    console.warn(`Public Infobanjir ${sourceName} unavailable: ${error.message}`);
     return null;
   }
 }
@@ -936,7 +941,7 @@ function estimateRiskFromAlerts(alerts) {
     return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "An official flood-related alert is active." };
   }
   if (/warning|amaran|severe|heavy|lebat|berterusan|thunderstorm|ribut|rain|hujan/i.test(weatherText)) {
-    return { status: "Safe", action: "No immediate action needed", reason: "Weather risk is being monitored, but no official flood confirmation is active." };
+    return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "Weather conditions show meaningful concern even though no direct JPS station is linked to this area." };
   }
 
   return { status: "Safe", action: "No immediate action needed", reason: "No active flood or severe weather alerts." };
@@ -967,20 +972,20 @@ function getContextOnlyRisk(alerts, nearbyMatches = []) {
       action: "Evacuate immediately",
       reason:
         reasons.length > 0
-            ? `No direct JPS station is linked to this area. Strong official confirmation detected: ${reasons.join(". ")}.`
-            : "No direct JPS station is linked to this area, but strong official flood confirmation is active.",
-      };
+          ? `No direct JPS station is linked to this area. Strong official confirmation detected: ${reasons.join(". ")}.`
+          : "No direct JPS station is linked to this area, but strong official flood confirmation is active.",
+    };
   }
 
   if (estimate.status === "Risk Rising") {
-      return {
-        status: "Risk Rising",
-        action: "Prepare essentials and monitor updates",
-        reason:
-          reasons.length > 0
+    return {
+      status: "Risk Rising",
+      action: "Prepare essentials and monitor updates",
+      reason:
+        reasons.length > 0
           ? `No direct JPS station is linked to this area. Supporting context indicates rising risk: ${reasons.join(". ")}.`
-            : "No direct JPS station is linked to this area, but supporting context indicates rising risk nearby.",
-      };
+          : "No direct JPS station is linked to this area, but supporting context indicates rising risk nearby.",
+    };
   }
 
   return {
@@ -1051,24 +1056,6 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
       };
     }
 
-    if (
-      highestNearby &&
-      getRiskScore(highestNearby.status) > getRiskScore(baseItem.status)
-    ) {
-      return {
-        ...baseItem,
-        status: highestNearby.status,
-        action: highestNearby.action,
-        reason: highestNearby.reason,
-        latestUpdate: {
-          type: "District JPS Monitoring",
-          summary: `${nearbyMatches.length} nearby district station${nearbyMatches.length > 1 ? "s" : ""} monitored. Highest nearby status is ${highestNearby.status}.`,
-        },
-        lastUpdate: highestNearby.lastUpdate || baseItem.lastUpdate,
-        dataBasis: "jps-direct+district",
-      };
-    }
-
     return baseItem;
   }
 
@@ -1085,26 +1072,44 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
   }));
   const hasNearbyJpsData = Boolean(highestNearby);
   const hasStateJpsData = rawStations.length > 0;
-  const estimate = hasStateJpsData
-    ? getContextOnlyRisk(alerts, nearbyMatches)
-    : estimateRiskFromAlerts(alerts);
+  const estimate = estimateRiskFromAlerts(alerts);
+
+  const nearestStation = nearbyMatches
+    .slice()
+    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
   const nearbyContextSummary = hasNearbyJpsData
-    ? `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored. Highest nearby status is ${highestNearby.status}.`
+    ? `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station status is ${nearestStation?.status || highestNearby.status}.`
     : estimate.reason;
 
-  const finalStatus = hasNearbyJpsData ? highestNearby.status : estimate.status;
-  const finalAction = hasNearbyJpsData ? highestNearby.action : estimate.action;
-  const finalReason = hasNearbyJpsData
-    ? highestNearby.status === "Safe"
-      ? "Nearby district JPS stations are currently below alert thresholds."
-      : highestNearby.reason
-    : estimate.reason;
+  let finalStatus = estimate.status;
+  let finalAction = estimate.action;
+  let finalReason = estimate.reason;
+
+  if (nearestStation) {
+    if (
+      estimate.status === "Risk Rising" &&
+      nearestStation.status === "Safe"
+    ) {
+      finalStatus = "Risk Rising";
+      finalAction = "Prepare essentials and monitor updates";
+      finalReason =
+        "No direct JPS station is linked to this area. Rain and weather warnings, official alerts, or Public Infobanjir and NADMA context show concern, while the nearest station remains Safe, so the area is marked Risk Rising.";
+    } else if (getRiskScore(nearestStation.status) > getRiskScore(finalStatus)) {
+      finalStatus = nearestStation.status;
+      finalAction = nearestStation.action;
+      finalReason =
+        nearestStation.status === "Safe"
+          ? "The nearest monitored station is currently below alert thresholds, and supporting signals remain limited."
+          : `No direct JPS station is linked to this area. After checking rain and official alerts first, the nearest monitored station shows ${nearestStation.status}, which raises local concern.`;
+    }
+  }
 
   const dataBasis = hasNearbyJpsData
     ? "jps-nearby"
     : hasStateJpsData
       ? "jps-state-monitoring"
       : "weather-estimated";
+
   const sourceNote = nearbyMatches.length > 0
     ? "JPS water-level readings are the main flood signal. Nearby district stations are supporting context for areas without a direct station."
     : hasStateJpsData
@@ -1140,11 +1145,11 @@ async function getRawDataByCity(city, state, district = "", options = {}) {
   const officialNotice = await fetchNadmaNotice(state, city);
   const publicInfobanjir = await fetchPublicInfobanjirContext(state, city);
   const alerts = { weather, officialNotice, publicInfobanjir };
-  
+
   const computed = computeCityRisk(city, district, state, rawItems, alerts);
   const satellite =
     computed.dataBasis === "jps-state-monitoring" ||
-    computed.dataBasis === "weather-estimated"
+      computed.dataBasis === "weather-estimated"
       ? await analyzeSatelliteFloodSignal({ location: city, district, state })
       : null;
   const satelliteAdjusted = {};
@@ -1175,7 +1180,7 @@ async function getRawDataByCityAndState(city, state) {
 
 async function getRawDataByState(state) {
   const rawItems = await getAllRawData(state);
-  
+
   // State-wide alerts for efficient fallback logic
   const weather = await fetchMetMalaysiaWeather(state, state);
   const officialNotice = await fetchNadmaNotice(state, state);
