@@ -2,6 +2,15 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const { getLocationAliases } = require("../data/locationAliases");
 const { MALAYSIA_LOCATION_DATA } = require("../data/locations");
+const {
+  CITY_COORDINATES,
+  STATION_COORDINATES_BY_ID,
+  CITY_STATION_OVERRIDES,
+  DEFAULT_NEARBY_STATION_RADIUS_KM,
+  MAX_NEARBY_STATIONS,
+  STRONG_NEARBY_DISTANCE_KM,
+  MODERATE_NEARBY_DISTANCE_KM,
+} = require("../data/geoCoordinates");
 const { analyzeSatelliteFloodSignal } = require("./satelliteImageryService");
 
 const INFOBANJIR_SOURCES = {
@@ -911,6 +920,231 @@ function cleanAlertText(value) {
   return text;
 }
 
+function toRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function getDistanceKm(lat1, lng1, lat2, lng2) {
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(lat2 - lat1);
+  const dLng = toRadians(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function roundDistance(distanceKm) {
+  return Math.round(distanceKm * 10) / 10;
+}
+
+function getCityCoordinates(state, district, city) {
+  return CITY_COORDINATES?.[state]?.[district]?.[city] || null;
+}
+
+function getStationCoordinates(item) {
+  return STATION_COORDINATES_BY_ID[item.stationId] || null;
+}
+
+function getCityStationOverrides(state, district, city) {
+  return CITY_STATION_OVERRIDES?.[state]?.[district]?.[city] || {};
+}
+
+function getDistanceBand(distanceKm) {
+  if (!Number.isFinite(distanceKm)) {
+    return "unknown";
+  }
+
+  if (distanceKm <= STRONG_NEARBY_DISTANCE_KM) {
+    return "strong";
+  }
+
+  if (distanceKm <= MODERATE_NEARBY_DISTANCE_KM) {
+    return "moderate";
+  }
+
+  return "weak";
+}
+
+function findCoordinateNearbyStations(city, district, state, rawStations) {
+  const cityCoordinates = getCityCoordinates(state, district, city);
+
+  if (!cityCoordinates) {
+    return null;
+  }
+
+  const { preferredStationIds = [], excludedStationIds = [] } =
+    getCityStationOverrides(state, district, city);
+  const preferredStationSet = new Set(preferredStationIds);
+  const excludedStationSet = new Set(excludedStationIds);
+
+  const stationsWithCoordinates = rawStations
+    .map((item) => {
+      if (excludedStationSet.has(item.stationId)) {
+        return null;
+      }
+
+      const stationCoordinates = getStationCoordinates(item);
+
+      if (!stationCoordinates) {
+        return null;
+      }
+
+      return {
+        ...item,
+        distanceKm: roundDistance(
+          getDistanceKm(
+            cityCoordinates.lat,
+            cityCoordinates.lng,
+            stationCoordinates.lat,
+            stationCoordinates.lng
+          )
+        ),
+        coordinateLabel: stationCoordinates.label || "",
+        isPreferred: preferredStationSet.size > 0 && preferredStationSet.has(item.stationId),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.isPreferred !== b.isPreferred) {
+        return a.isPreferred ? -1 : 1;
+      }
+
+      return a.distanceKm - b.distanceKm;
+    });
+
+  if (stationsWithCoordinates.length === 0) {
+    return null;
+  }
+
+  const radiusKm = Number(
+    process.env.NEARBY_STATION_RADIUS_KM || DEFAULT_NEARBY_STATION_RADIUS_KM
+  );
+  let nearbyMatches = stationsWithCoordinates
+    .filter((item) => item.distanceKm <= radiusKm)
+    .slice(0, MAX_NEARBY_STATIONS);
+
+  if (nearbyMatches.length === 0 && preferredStationSet.size > 0) {
+    nearbyMatches = stationsWithCoordinates
+      .filter((item) => item.isPreferred)
+      .slice(0, MAX_NEARBY_STATIONS);
+  }
+
+  return {
+    mode: "coordinates",
+    cityCoordinates,
+    nearestStation: nearbyMatches[0] || null,
+    nearbyMatches,
+    hasCoverage: true,
+  };
+}
+
+function findDistrictNearbyStations(city, district, state, rawStations) {
+  const districtTargets = unique([
+    district,
+    withoutCommonSuffixes(district),
+    city,
+    withoutCommonSuffixes(city),
+  ])
+    .map(normalize)
+    .filter(Boolean);
+
+  const nearbyMatches = rawStations.filter((item) =>
+    districtTargets.some((target) => normalize(item.district) === target)
+  );
+
+  const nearestStation = nearbyMatches
+    .slice()
+    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
+
+  return {
+    mode: "district",
+    nearestStation: nearestStation || null,
+    nearbyMatches,
+    hasCoverage: nearbyMatches.length > 0,
+  };
+}
+
+function chooseNearbyRiskContext(estimate, nearestStation, stations) {
+  const final = {
+    status: estimate.status,
+    action: estimate.action,
+    reason: estimate.reason,
+  };
+
+  if (!nearestStation) {
+    return final;
+  }
+
+  const nearestBand = getDistanceBand(nearestStation.distanceKm);
+  const elevatedStations = stations.filter(
+    (item) => getRiskScore(item.status) > getRiskScore("Safe")
+  );
+  const strongElevatedStations = elevatedStations.filter(
+    (item) => getDistanceBand(item.distanceKm) === "strong"
+  );
+  const moderateElevatedStations = elevatedStations.filter((item) => {
+    const band = getDistanceBand(item.distanceKm);
+    return band === "strong" || band === "moderate";
+  });
+
+  if (
+    estimate.status === "Risk Rising" &&
+    nearestStation.status === "Safe"
+  ) {
+    final.status = "Risk Rising";
+    final.action = "Prepare essentials and monitor updates";
+    final.reason =
+      "No direct JPS station is linked to this area. Rain and weather warnings, official alerts, or Public Infobanjir and NADMA context show concern, while the nearest station remains Safe, so the area is marked Risk Rising.";
+    return final;
+  }
+
+  if (getRiskScore(nearestStation.status) <= getRiskScore(final.status)) {
+    return final;
+  }
+
+  if (nearestBand === "weak") {
+    if (estimate.status === "Safe") {
+      return final;
+    }
+
+    final.status = "Risk Rising";
+    final.action = "Prepare essentials and monitor updates";
+    final.reason =
+      `No direct JPS station is linked to this area. The nearest mapped station is ${nearestStation.distanceKm} km away, so it is treated as weak context only. Supporting alerts keep the area at Risk Rising.`;
+    return final;
+  }
+
+  if (
+    nearestStation.status === "Risk Rising" &&
+    moderateElevatedStations.length === 0
+  ) {
+    return final;
+  }
+
+  if (
+    getRiskScore(nearestStation.status) >= getRiskScore("Warning") &&
+    nearestBand === "moderate" &&
+    strongElevatedStations.length === 0 &&
+    estimate.status === "Safe"
+  ) {
+    final.status = "Risk Rising";
+    final.action = "Prepare essentials and monitor updates";
+    final.reason =
+      `No direct JPS station is linked to this area. The nearest mapped station is elevated but only at moderate distance (${nearestStation.distanceKm} km), so the area is capped at Risk Rising without stronger supporting alerts.`;
+    return final;
+  }
+
+  final.status = nearestStation.status;
+  final.action = nearestStation.action;
+  final.reason =
+    `No direct JPS station is linked to this area. After checking rain and official alerts first, the nearest coordinate-matched station ${nearestStation.stationName} is ${nearestStation.distanceKm} km away and shows ${nearestStation.status}, which raises local concern.`;
+  return final;
+}
+
 function estimateRiskFromAlerts(alerts) {
   const { weather, officialNotice, publicInfobanjir } = alerts;
   const relevantInfobanjirText = [
@@ -1002,18 +1236,25 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     city,
     withoutCommonSuffixes(city),
     ...getLocationAliases(city, district, state),
-  ]).map(normalize);
-  const districtTargets = unique([
-    district,
-    withoutCommonSuffixes(district),
-    city,
-    withoutCommonSuffixes(city),
   ])
     .map(normalize)
-    .filter(Boolean);
-  const nearbyMatches = rawStations.filter((item) =>
-    districtTargets.some((target) => normalize(item.district) === target)
+    .filter(
+      (target) =>
+        target &&
+        target !== normalize(district) &&
+        target !== normalize(state)
+    );
+  const coordinateNearbyContext = findCoordinateNearbyStations(
+    city,
+    district,
+    state,
+    rawStations
   );
+  const districtNearbyContext =
+    coordinateNearbyContext || findDistrictNearbyStations(city, district, state, rawStations);
+  const nearbyMatchContext = districtNearbyContext;
+  const nearbyMatches = nearbyMatchContext?.nearbyMatches || [];
+  const nearestStation = nearbyMatchContext?.nearestStation || null;
   const highestNearby = nearbyMatches
     .slice()
     .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
@@ -1069,40 +1310,35 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     action: s.action,
     reason: s.reason,
     lastUpdate: s.lastUpdate,
+    distanceKm: s.distanceKm,
   }));
   const hasNearbyJpsData = Boolean(highestNearby);
   const hasStateJpsData = rawStations.length > 0;
   const estimate = estimateRiskFromAlerts(alerts);
-
-  const nearestStation = nearbyMatches
-    .slice()
-    .sort((a, b) => getRiskScore(b.status) - getRiskScore(a.status))[0];
   const nearbyContextSummary = hasNearbyJpsData
-    ? `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station status is ${nearestStation?.status || highestNearby.status}.`
+    ? nearbyMatchContext?.mode === "coordinates"
+      ? `${stations.length} coordinate-matched station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station is ${nearestStation?.stationName || "-"} at ${nearestStation?.distanceKm ?? "-"} km with status ${nearestStation?.status || highestNearby.status}.`
+      : `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station status is ${nearestStation?.status || highestNearby.status}.`
     : estimate.reason;
 
-  let finalStatus = estimate.status;
-  let finalAction = estimate.action;
-  let finalReason = estimate.reason;
+  const finalDecision =
+    nearbyMatchContext?.mode === "coordinates"
+      ? chooseNearbyRiskContext(estimate, nearestStation, stations)
+      : {
+          status: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
+            ? nearestStation.status
+            : estimate.status,
+          action: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
+            ? nearestStation.action
+            : estimate.action,
+          reason: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
+            ? `No direct JPS station is linked to this area. After checking rain and official alerts first, the nearest monitored station shows ${nearestStation.status}, which raises local concern.`
+            : estimate.reason,
+        };
 
-  if (nearestStation) {
-    if (
-      estimate.status === "Risk Rising" &&
-      nearestStation.status === "Safe"
-    ) {
-      finalStatus = "Risk Rising";
-      finalAction = "Prepare essentials and monitor updates";
-      finalReason =
-        "No direct JPS station is linked to this area. Rain and weather warnings, official alerts, or Public Infobanjir and NADMA context show concern, while the nearest station remains Safe, so the area is marked Risk Rising.";
-    } else if (getRiskScore(nearestStation.status) > getRiskScore(finalStatus)) {
-      finalStatus = nearestStation.status;
-      finalAction = nearestStation.action;
-      finalReason =
-        nearestStation.status === "Safe"
-          ? "The nearest monitored station is currently below alert thresholds, and supporting signals remain limited."
-          : `No direct JPS station is linked to this area. After checking rain and official alerts first, the nearest monitored station shows ${nearestStation.status}, which raises local concern.`;
-    }
-  }
+  const finalStatus = finalDecision.status;
+  const finalAction = finalDecision.action;
+  const finalReason = finalDecision.reason;
 
   const dataBasis = hasNearbyJpsData
     ? "jps-nearby"
@@ -1111,7 +1347,9 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
       : "weather-estimated";
 
   const sourceNote = nearbyMatches.length > 0
-    ? "JPS water-level readings are the main flood signal. Nearby district stations are supporting context for areas without a direct station."
+    ? nearbyMatchContext?.mode === "coordinates"
+      ? "JPS water-level readings are the main flood signal. Nearby stations were selected using city-to-station coordinates for areas without a direct station."
+      : "JPS water-level readings are the main flood signal. Nearby district stations are supporting context for areas without a direct station."
     : hasStateJpsData
       ? "JPS water-level data exists for this state. This area has no linked station, so weather and official alerts are supporting context only."
       : "Estimated from weather and official alerts because no JPS water-level data is available.";
