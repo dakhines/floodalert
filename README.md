@@ -126,34 +126,75 @@ Frontend Dashboard
 - Google Gemini API Key
 
 **2. Environment Variables**
-(For **backend/.env**, copy-paste this into .env file, if don't have one in backend folder, create one)
+
+Choose **one** frontend option below depending on how you want to run the app.
+
+### Option A: Full Local Development
+Use this when running both the backend and frontend on your own machine.
+
+(For **backend/.env**, copy-paste this into a `.env` file. If you do not have one in the backend folder, create it.)
 **`backend/.env`**
 ```env
-GEMINI_API_KEY=AQ.Ab8RN6K_5qRECqrjlD5y34T59BgsfMv4DyDt6LVUd83MHgIHHg
+GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/floodalert
 APP_NAME=FloodAlert
 
-EMAIL_USER=floodalertofficial@gmail.com
-EMAIL_APP_PASSWORD=eyif zdre qwmm pyzr
-EMAIL_FROM=floodalertofficial@gmail.com
+EMAIL_USER=your_email@example.com
+EMAIL_APP_PASSWORD=your_email_app_password
+EMAIL_FROM=your_email@example.com
 ```
 
-(For **frontend/.env**, copy-paste this into .env file, if don't have one in frontend folder, create one)
-**`frontend/.env`** 
+(For **frontend/.env**, copy-paste this into a .env file. If you do not have one in the frontend folder, create it.)
+**`frontend/.env`**
+```env
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+### Option B: Local Frontend + Deployed Backend
+Use this when you want to run only the frontend locally and connect it to the hosted backend.
+
+(For **frontend/.env**, copy-paste this into a .env file. If you do not have one in the frontend folder, create it.)
+**`frontend/.env`**
 ```env
 VITE_API_BASE_URL=https://floodalert-backend-246006107681.asia-southeast1.run.app
 ```
+**Note**: In this option, you do not need to run the backend locally, so backend/.env is not required.
+
+**However, for judges, Option B is recommended** because it runs the app with the hosted backend and does not require local backend credentials.
+
 
 ### 3. MongoDB Setup
-You can either install MongoDB locally or use a free cluster on MongoDB Atlas. 
-- If running locally, ensure the MongoDB service is running before starting the backend.
-- If using Atlas, replace the `MONGODB_URI` in your `.env` file with your cluster's connection string. The database will be created automatically upon connection.
+
+This step is only required for **Option A: Full Local Development**.
+
+You can either install MongoDB locally or use a free cluster on MongoDB Atlas.
+
+- If running locally, make sure the MongoDB service is running before starting the backend.
+- If using Atlas, replace the `MONGODB_URI` value in `backend/.env` with your cluster connection string.
+- The database will be created automatically when the backend connects to MongoDB.
+
+**How to install MongoDB locally**
+1. Go to the MongoDB [Community Server download page](https://www.mongodb.com/try/download/community).
+2. Download and install MongoDB Community Server.
+3. Complete the installation steps.
+4. Make sure the MongoDB service is running before starting the backend.
+
+**How to set up MongoDB Atlas**
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a free account or sign in.
+3. Create a new cluster.
+4. Choose the free tier if available.
+5. After the cluster is ready, click **Connect**.
+6. Choose **Connect your application**.
+7. Copy the connection string.
+8. Replace the `MONGODB_URI` value in `backend/.env` with that connection string.
+
 
 ### 4. Running the Backend
 ```bash
-cd (other folder)/floodalert/backend
+cd path/to/floodalert/backend
 npm install
 npm run dev
 ```
@@ -161,74 +202,61 @@ npm run dev
 
 ### 5. Running the Frontend
 ```bash
-cd (other folder)/floodalert/frontend
+cd path/to/floodalert/frontend
 npm install
 npm run dev
 ```
 The frontend will start on a local Vite port, usually `http://localhost:5173`.
 
 ### 6. Quick Local Checklist
-Before opening the app locally, make sure:
+
+**For Option A: Full Local Development**
 - MongoDB is running
 - `backend/.env` exists with your own values
 - `frontend/.env` or `frontend/.env.local` points to `http://localhost:5000`
 - the backend is running before the frontend tries to fetch live data
 
+**For Option B: Local Frontend + Deployed Backend**
+- `frontend/.env` or `frontend/.env.local` points to your deployed backend URL
+- you do not need to run MongoDB locally
+- you do not need to run the backend locally
+
 ## Google Cloud Run Deployment
 
-The backend includes a `Dockerfile` and is fully configured for Cloud Run deployment.
+Both the backend and frontend were deployed using **Google Cloud Run** through the Google Cloud Console.
 
-1. Install the Google Cloud SDK (`gcloud`).
-2. Authenticate and select your Google Cloud project.
-3. Deploy the backend from the `backend/` directory:
-   ```bash
-   cd (other folder)/floodalert/backend
-   gcloud run deploy floodalert-backend \
-     --source . \
-     --set-env-vars="PORT=5000,MONGODB_URI=your_prod_mongo_uri,GEMINI_API_KEY=your_gemini_key,EMAIL_USER=your_email,EMAIL_APP_PASSWORD=your_password,EMAIL_FROM=your_email,APP_NAME=FloodAlert" \
-     --allow-unauthenticated
-   ```
-4. Update the frontend's `.env` variable `VITE_API_BASE_URL` with the newly generated Cloud Run URL, then build and deploy the frontend to your preferred static host (e.g., Firebase Hosting, Vercel).
+**Backend Deployment**
+1. Open the Google Cloud Console and go to **Cloud Run**.
+2. Create or select the backend service.
+3. Choose the backend source for deployment.
+4. Set the required environment variables:
+   - `PORT`
+   - `MONGODB_URI`
+   - `GEMINI_API_KEY`
+   - `GEMINI_MODEL`
+   - `EMAIL_USER`
+   - `EMAIL_APP_PASSWORD`
+   - `EMAIL_FROM`
+   - `APP_NAME`
+5. Allow unauthenticated access so the frontend can call the backend publicly.
+6. After deployment, copy the generated backend service URL.
+
+**Frontend Deployment**
+1. Set `VITE_API_BASE_URL` to the deployed backend URL before deploying the frontend.
+2. Open the Google Cloud Console and go to **Cloud Run**.
+3. Create or select the frontend service.
+4. Choose the frontend source for deployment.
+5. Deploy the service and allow unauthenticated access.
+6. After deployment, copy the generated frontend service URL and use it as the public app link.
+
 
 ## AI Integration Explanation
 
-FloodAlert uses the `gemini-1.5-flash-latest` model to act as a public safety communicator. The Express backend aggregates complex, raw telemetry data from multiple meteorological endpoints and passes it to the Gemini API with a strict system instruction. The AI processes the hydrological thresholds and returns a structured JSON payload containing a clear `status`, `reason`, and actionable `userSummary`, ensuring residents don't need to interpret raw data graphs during an emergency.
-
----
+FloodAlert uses the `gemini-2.5-flash` model to act as a public safety communicator. The Express backend aggregates complex, raw telemetry data from multiple meteorological endpoints and passes it to the Gemini API with a strict system instruction. The AI processes the hydrological thresholds and returns a structured JSON payload containing a clear `status`, `reason`, and actionable `userSummary`, ensuring residents don't need to interpret raw data graphs during an emergency.
 
 ## AI / Code Tool Disclosure
 
 In accordance with hackathon rules, we disclose the use of the following tools:
 - **Google AI Studio:** Used to test, refine, and perfect the Gemini prompt for flood risk analysis.
 - **Antigravity:** Used as the primary agentic coding assistant to accelerate development, implement the AI layer integrations, establish the Express/React boilerplate, format components, and prepare the project for a production Cloud Run environment.
-
----
-
-## Known Limitations
-
-- **Scraping Dependency:** The backend currently relies on web scraping or unofficial endpoints for some government data. If the government site structure changes, the data fetching logic may temporarily break.
-- **Rate Limiting:** Free-tier Gemini API usage may hit rate limits during a massive surge of simultaneous users. 
-
-## Future Improvements
-
-- **Push Notifications:** Implement Firebase Cloud Messaging (FCM) to push SMS and mobile notifications to users when their specific district hits a "Warning" or "Evacuate" status.
-- **Historical Data Trends:** Use Gemini to analyze historical flooding patterns and predict future high-risk zones based on incoming monsoon trajectories.
-- **Crowdsourced Reports:** Allow verified users to upload photos of local water levels to supplement official telemetry data.
-
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
+- **Google Cloud Run:** Used to deploy both the backend and frontend applications, making them accessible publicly without requiring manual server management.
