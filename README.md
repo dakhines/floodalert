@@ -8,7 +8,7 @@ Flood information is often spread across multiple official sources, making it di
 
 ## Solution
 
-FloodAlert combines live flood-related sources with Gemini AI powered (Google AI Studio) summarisation to present clear flood status, recommended action, and latest updates in a user-friendly interface.
+FloodAlert combines live flood-related sources with Gemini AI powered (Google AI Studio) summarisation to present clear flood status, recommended action, and latest updates in a user-friendly interface
 
 ## Key Features
 
