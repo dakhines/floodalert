@@ -14,6 +14,75 @@ function normalize(value) {
     return String(value || "").trim().toLowerCase();
 }
 
+function parseRawTimestamp(value) {
+    if (!value) {
+        return null;
+    }
+
+    const isoDate = new Date(value);
+
+    if (!Number.isNaN(isoDate.getTime())) {
+        return isoDate;
+    }
+
+    const match = String(value).match(
+        /(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/
+    );
+
+    if (!match) {
+        return null;
+    }
+
+    const [, day, month, year, hour, minute] = match;
+
+    return new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(minute)
+    );
+}
+
+function formatRelativeUpdateTime(date, nowMs) {
+    if (!date) {
+        return "Last updated recently";
+    }
+
+    const diffMs = Math.max(0, nowMs - date.getTime());
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) {
+        return "Last updated just now";
+    }
+
+    if (diffMinutes === 1) {
+        return "Last updated 1 minute ago";
+    }
+
+    if (diffMinutes < 60) {
+        return `Last updated ${diffMinutes} minutes ago`;
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    if (diffHours === 1) {
+        return "Last updated 1 hour ago";
+    }
+
+    if (diffHours < 24) {
+        return `Last updated ${diffHours} hours ago`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays === 1) {
+        return "Last updated 1 day ago";
+    }
+
+    return `Last updated ${diffDays} days ago`;
+}
+
 function LocationRowSkeleton() {
     const [messageIndex, setMessageIndex] = useState(0);
     const messages = [
@@ -57,6 +126,15 @@ export default function AllLocations() {
     const [locationDetails, setLocationDetails] = useState({});
     const [locationsLoading, setLocationsLoading] = useState(true);
     const [locationsError, setLocationsError] = useState("");
+    const [nowMs, setNowMs] = useState(() => Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setNowMs(Date.now());
+        }, 60000);
+
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         if (!selectedState) {
@@ -206,6 +284,27 @@ export default function AllLocations() {
             ? MALAYSIA_LOCATION_DATA[selectedState]?.[selectedDistrict] || []
             : [];
 
+    const latestVisibleUpdate = useMemo(() => {
+        const visibleItems =
+            cities.length > 0
+                ? cities
+                      .map((city) => locationDetails[city] || findStatusItem(city))
+                      .filter(Boolean)
+                : locations;
+
+        const parsedDates = visibleItems
+            .map((item) => parseRawTimestamp(item?.rawLastUpdate || item?.lastUpdate))
+            .filter(Boolean)
+            .sort((a, b) => b.getTime() - a.getTime());
+
+        return parsedDates[0] || null;
+    }, [cities, locationDetails, locations, selectedDistrict, selectedState]);
+
+    const lastUpdatedLabel = useMemo(
+        () => formatRelativeUpdateTime(latestVisibleUpdate, nowMs),
+        [latestVisibleUpdate, nowMs]
+    );
+
     const handleSelect = (city) => {
         setViewingLocation({
             city,
@@ -348,7 +447,7 @@ export default function AllLocations() {
             </section>
 
             <p className="mt-4 text-center text-xs font-semibold text-slate-500">
-                Last updated 5 minutes ago
+                {lastUpdatedLabel}
             </p>
             <BottomNav />
         </AppShell>

@@ -28,6 +28,8 @@ function normalizeLocation(item, fallbackLocation = "") {
                   summary: item.summary || "No update available.",
               };
 
+    const rawLastUpdate = item.lastUpdate || item.timestamp || "";
+
     return {
         ...item,
         location,
@@ -35,7 +37,8 @@ function normalizeLocation(item, fallbackLocation = "") {
         action: item.action || "Monitoring",
         reason:
             item.reason || "No significant flood risk detected at the moment",
-        lastUpdate: formatDisplayTime(item.lastUpdate || item.timestamp || ""),
+        rawLastUpdate,
+        lastUpdate: formatDisplayTime(rawLastUpdate),
         latestUpdate: {
             type: latestUpdate.type || "Update",
             summary: latestUpdate.summary || "No recent official update.",
