@@ -1017,7 +1017,13 @@ function findCoordinateNearbyStations(city, district, state, rawStations) {
     });
 
   if (stationsWithCoordinates.length === 0) {
-    return null;
+    return {
+      mode: "coordinates",
+      cityCoordinates,
+      nearestStation: null,
+      nearbyMatches: [],
+      hasCoverage: true,
+    };
   }
 
   const radiusKm = Number(
