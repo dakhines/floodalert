@@ -28,6 +28,14 @@ const CITY_COORDINATES = {
       "Sendayan": {
         "lat": 2.6798011,
         "lng": 101.8600707
+      },
+      "Dusun Nyiur": {
+        "lat": 2.7263225,
+        "lng": 101.9002897
+      },
+      "Ladang Kombok": {
+        "lat": 2.7263225,
+        "lng": 101.9002897
       }
     },
     "Port Dickson": {
@@ -46,6 +54,22 @@ const CITY_COORDINATES = {
       "Teluk Kemang": {
         "lat": 2.4620718,
         "lng": 101.8528949
+      },
+      "Sua Betong": {
+        "lat": 2.5103646,
+        "lng": 101.8759731
+      },
+      "Kg. Jimah Lama": {
+        "lat": 2.5103646,
+        "lng": 101.8759731
+      },
+      "Kg. Paya": {
+        "lat": 2.5103646,
+        "lng": 101.8759731
+      },
+      "Kg. Sawah Sunggala": {
+        "lat": 2.5103646,
+        "lng": 101.8759731
       }
     },
     "Kuala Pilah": {
@@ -66,6 +90,10 @@ const CITY_COORDINATES = {
       "Bandar Seri Jempol": {
         "lat": 2.897376,
         "lng": 102.4059228
+      },
+      "Kg. Datok Johan": {
+        "lat": 2.8543672,
+        "lng": 102.4049067
       }
     },
     "Tampin": {
@@ -80,6 +108,14 @@ const CITY_COORDINATES = {
       "Gemencheh": {
         "lat": 2.5301446,
         "lng": 102.4001362
+      },
+      "Kg. Tiong": {
+        "lat": 2.5546759,
+        "lng": 102.4866404
+      },
+      "Bukit Jalor": {
+        "lat": 2.5546759,
+        "lng": 102.4866404
       }
     },
     "Rembau": {
@@ -90,6 +126,14 @@ const CITY_COORDINATES = {
       "Pedas": {
         "lat": 2.5199384,
         "lng": 102.0340304
+      },
+      "Kg. Pilin": {
+        "lat": 2.5389153,
+        "lng": 102.0710971
+      },
+      "Titian Bintangor": {
+        "lat": 2.5389153,
+        "lng": 102.0710971
       }
     },
     "Jelebu": {
@@ -100,6 +144,14 @@ const CITY_COORDINATES = {
       "Simpang Pertang": {
         "lat": 2.9455874,
         "lng": 102.2587478
+      },
+      "Kg. Jerang": {
+        "lat": 2.9913755,
+        "lng": 102.1644529
+      },
+      "Kg. Chennah": {
+        "lat": 2.9913755,
+        "lng": 102.1644529
       }
     }
   },
@@ -140,6 +192,38 @@ const CITY_COORDINATES = {
       "Bukit Baru": {
         "lat": 2.2176147,
         "lng": 102.2734112
+      },
+      "Pintu Air Klebang Besar U/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Pintu Air Klebang Besar D/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Pintu Air Cheng U/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Pintu Air Cheng D/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Kg. Sg. Putat": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Pintu Air Batu Hampar": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Barrage Sungai Melaka U/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
+      },
+      "Barrage Sungai Melaka D/S": {
+        "lat": 2.2130834,
+        "lng": 102.2583017
       }
     },
     "Alor Gajah": {
@@ -166,6 +250,50 @@ const CITY_COORDINATES = {
       "Kuala Sungai Baru": {
         "lat": 2.3609669,
         "lng": 102.0389737
+      },
+      "Jamb. Sg. Simpang Ampat": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Kg. Sg. Siput": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Tanjung Rimau": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Jambatan Tebong": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Gadek": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Melaka Pindah": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Pantai Belimbing": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Empangan Durian Tunggal": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Bt. 11 Air Resam": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Pintu Air Durian Tunggal U/S": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
+      },
+      "Pintu Air Durian Tunggal D/S": {
+        "lat": 2.3694342,
+        "lng": 102.1746923
       }
     },
     "Jasin": {
@@ -188,6 +316,30 @@ const CITY_COORDINATES = {
       "Rim": {
         "lat": 2.4738252,
         "lng": 102.4155451
+      },
+      "Chohong": {
+        "lat": 2.317312,
+        "lng": 102.4300729
+      },
+      "Empangan Jus": {
+        "lat": 2.317312,
+        "lng": 102.4300729
+      },
+      "Selandar": {
+        "lat": 2.317312,
+        "lng": 102.4300729
+      },
+      "Rumah Pam Telok Rimba": {
+        "lat": 2.317312,
+        "lng": 102.4300729
+      },
+      "Pintu Air Kuala Kesang": {
+        "lat": 2.317312,
+        "lng": 102.4300729
+      },
+      "Tehel": {
+        "lat": 2.317312,
+        "lng": 102.4300729
       }
     }
   },
@@ -220,6 +372,34 @@ const CITY_COORDINATES = {
       "Saleng": {
         "lat": 1.6296148,
         "lng": 103.6328129
+      },
+      "Kg. Sg. Siam": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Kg. Murni Jaya": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Bt. 21 Kulai": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Kg. Separa": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Taman Aman": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Kg. Melayu Bukit Batu": {
+        "lat": 1.6367504,
+        "lng": 103.614703
+      },
+      "Kg. Sri Paya": {
+        "lat": 1.6367504,
+        "lng": 103.614703
       }
     },
     "Johor Bahru": {
@@ -278,6 +458,42 @@ const CITY_COORDINATES = {
       "Permas Jaya": {
         "lat": 1.4981141,
         "lng": 103.8241364
+      },
+      "Kg. Baru Muafakat": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Nusa Duta": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Kg. Laut": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Kg. Pasir": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Kg. Maju Jaya": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Taman Sri Pandan": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Klinik Desa Plentong": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Kg. Sepakat": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
+      },
+      "Kg. Bukit Dagang": {
+        "lat": 1.5059131,
+        "lng": 103.7502585
       }
     },
     "Batu Pahat": {
@@ -304,6 +520,54 @@ const CITY_COORDINATES = {
       "Rengit": {
         "lat": 1.6800091,
         "lng": 103.1457254
+      },
+      "Ladang Chaah": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Empangan Bekok": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Bt. 77 Jln. Yong Peng": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Bandar Yong Peng": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Empangan Sembrong": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Bt. 2 Sembrong": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Parit Karjo": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Parit Besar": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Parit Belemam": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Sri Medan": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Parit Sulong": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
+      },
+      "Tebing Tinggi": {
+        "lat": 1.8450956,
+        "lng": 103.0799135
       }
     },
     "Kluang": {
@@ -326,6 +590,22 @@ const CITY_COORDINATES = {
       "Machap": {
         "lat": 1.8816538,
         "lng": 103.262764
+      },
+      "Pekan Paloh": {
+        "lat": 1.8874557,
+        "lng": 103.3539819
+      },
+      "Bandar Kluang": {
+        "lat": 1.8874557,
+        "lng": 103.3539819
+      },
+      "Kg. Contoh": {
+        "lat": 1.8874557,
+        "lng": 103.3539819
+      },
+      "Empangan Machap": {
+        "lat": 1.8874557,
+        "lng": 103.3539819
       }
     },
     "Muar": {
@@ -348,6 +628,26 @@ const CITY_COORDINATES = {
       "Bukit Kepong": {
         "lat": 2.3606953,
         "lng": 102.8883564
+      },
+      "Kg. Olak Sepam": {
+        "lat": 2.1106707,
+        "lng": 102.6968415
+      },
+      "Panchor": {
+        "lat": 2.1106707,
+        "lng": 102.6968415
+      },
+      "Kg. Parit Wahid": {
+        "lat": 2.1106707,
+        "lng": 102.6968415
+      },
+      "Kg. Sg. Terap": {
+        "lat": 2.1106707,
+        "lng": 102.6968415
+      },
+      "Kg. Parit Tengah": {
+        "lat": 2.1106707,
+        "lng": 102.6968415
       }
     },
     "Segamat": {
@@ -370,6 +670,42 @@ const CITY_COORDINATES = {
       "Bekok": {
         "lat": 2.3875332,
         "lng": 103.1809378
+      },
+      "Kg. Awat": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Ayer Panas": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Felda Kemelah": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Segamat Kecil": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Bandar Segamat": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Genuang": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Jeti Kg. Tekam": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Kg. Gatom": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
+      },
+      "Kangkar Chaah": {
+        "lat": 2.4521432,
+        "lng": 102.8813224
       }
     },
     "Kota Tinggi": {
@@ -396,6 +732,38 @@ const CITY_COORDINATES = {
       "Tanjung Surat": {
         "lat": 1.4714946,
         "lng": 104.0576926
+      },
+      "Linggiu": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Rantau Panjang": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Kg. Sri Jaya": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Kota Tinggi": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Kg. Sg. Sembilang": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Punggai": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Sedili Kecil": {
+        "lat": 1.613013,
+        "lng": 104.1178781
+      },
+      "Kg. Mawai": {
+        "lat": 1.613013,
+        "lng": 104.1178781
       }
     },
     "Pontian": {
@@ -414,6 +782,22 @@ const CITY_COORDINATES = {
       "Benut": {
         "lat": 1.6230785,
         "lng": 103.307311
+      },
+      "Kg. Kabong": {
+        "lat": 1.4963388,
+        "lng": 103.4325426
+      },
+      "Kg. Paya Embun": {
+        "lat": 1.4963388,
+        "lng": 103.4325426
+      },
+      "Pintu Air Parit Salleh": {
+        "lat": 1.4963388,
+        "lng": 103.4325426
+      },
+      "Kg. Ulu Pulai": {
+        "lat": 1.4963388,
+        "lng": 103.4325426
       }
     },
     "Tangkak": {
@@ -436,6 +820,26 @@ const CITY_COORDINATES = {
       "Sungai Mati": {
         "lat": 2.145582,
         "lng": 102.5625436
+      },
+      "Simpang 5 Darat": {
+        "lat": 2.1927003,
+        "lng": 102.5754182
+      },
+      "Senduk": {
+        "lat": 2.1927003,
+        "lng": 102.5754182
+      },
+      "Pintu Air Tanjung Agas": {
+        "lat": 2.1927003,
+        "lng": 102.5754182
+      },
+      "Kg. Seri Ma'amor": {
+        "lat": 2.1927003,
+        "lng": 102.5754182
+      },
+      "Telok Rimba": {
+        "lat": 2.1927003,
+        "lng": 102.5754182
       }
     },
     "Mersing": {
@@ -454,6 +858,18 @@ const CITY_COORDINATES = {
       "Pulau Tioman": {
         "lat": 2.5934752,
         "lng": 103.7820267
+      },
+      "Kg. Labong": {
+        "lat": 2.4878347,
+        "lng": 103.7744791
+      },
+      "Kg. Tenglu Kecil": {
+        "lat": 2.4878347,
+        "lng": 103.7744791
+      },
+      "Paya Dato": {
+        "lat": 2.4878347,
+        "lng": 103.7744791
       }
     }
   },
@@ -482,6 +898,42 @@ const CITY_COORDINATES = {
       "Simpang Empat": {
         "lat": 6.3442418,
         "lng": 100.1907193
+      },
+      "Wang Kelian": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Kg. Chantik": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Kg. Masjid": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Empangan Timah Tasuh": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Kolam Sg. Jernih": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Balik Guar": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Istana": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Kg. Bakau": {
+        "lat": 6.4573601,
+        "lng": 100.24341
+      },
+      "Bukit Tok Poh": {
+        "lat": 6.4573601,
+        "lng": 100.24341
       }
     }
   },
@@ -526,6 +978,30 @@ const CITY_COORDINATES = {
       "Seri Kembangan": {
         "lat": 3.0340649,
         "lng": 101.7055684
+      },
+      "Paya Jaras": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
+      },
+      "Kg. Budiman": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
+      },
+      "Kg. Gandhi": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
+      },
+      "Puchong Drop": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
+      },
+      "Kg. Melayu Subang": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
+      },
+      "TTDI Jaya": {
+        "lat": 3.0871727,
+        "lng": 101.6067355
       }
     },
     "Hulu Langat": {
@@ -560,6 +1036,66 @@ const CITY_COORDINATES = {
       "Beranang": {
         "lat": 2.9043733,
         "lng": 101.8648037
+      },
+      "Kg. Lembah Jaya Utara": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Kg. Sg. Lui": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "TNB Pangsun": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Batu 20": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Batu 15": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Batu 12": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Kg. Baru Balakong": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Taman TTDI Grove": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Kantan": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Pekan Kajang": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Taman West Country Kajang": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Kg. Pasir": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Jalan Seri Tanjung": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Pekan Bangi Lama": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
+      },
+      "Kg. Sesapan Batu Rembau": {
+        "lat": 3.0093762,
+        "lng": 101.7994656
       }
     },
     "Klang": {
@@ -590,6 +1126,38 @@ const CITY_COORDINATES = {
       "Pulau Indah": {
         "lat": 2.9401104,
         "lng": 101.3272918
+      },
+      "Kg. Lombong": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Taman Sri Muda": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Taman Desa Kemuning": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Tugu Keris": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Kg. Delek": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Pekan Meru": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "Kg. Perepat, Kapar": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
+      },
+      "P/A Pandamaran": {
+        "lat": 3.0403629,
+        "lng": 101.4034317
       }
     },
     "Gombak": {
@@ -620,6 +1188,30 @@ const CITY_COORDINATES = {
       "Kundang": {
         "lat": 3.270281,
         "lng": 101.512023
+      },
+      "Taman Tun Teja": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
+      },
+      "Rawang Tin": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
+      },
+      "Country Homes Rawang": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
+      },
+      "Kg. Melayu Seri Kundang": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
+      },
+      "Batu 10": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
+      },
+      "Kg. Kemensah": {
+        "lat": 3.2496159,
+        "lng": 101.6451533
       }
     },
     "Sepang": {
@@ -646,6 +1238,22 @@ const CITY_COORDINATES = {
       "Sungai Pelek": {
         "lat": 2.6432355,
         "lng": 101.7164195
+      },
+      "Jenderam Hilir": {
+        "lat": 2.7985421,
+        "lng": 101.704132
+      },
+      "Taman Desa Merpati": {
+        "lat": 2.7985421,
+        "lng": 101.704132
+      },
+      "Kg. Salak Tinggi": {
+        "lat": 2.7985421,
+        "lng": 101.704132
+      },
+      "Kg. Labu Lanjut": {
+        "lat": 2.7985421,
+        "lng": 101.704132
       }
     },
     "Kuala Langat": {
@@ -672,6 +1280,22 @@ const CITY_COORDINATES = {
       "Carey Island": {
         "lat": 2.8907541,
         "lng": 101.3586264
+      },
+      "Bukit Changgang": {
+        "lat": 2.8138148,
+        "lng": 101.4700911
+      },
+      "JPS Sg. Manggis": {
+        "lat": 2.8138148,
+        "lng": 101.4700911
+      },
+      "P/A Kg. Teluk Pulai": {
+        "lat": 2.8138148,
+        "lng": 101.4700911
+      },
+      "RS Batu 8": {
+        "lat": 2.8138148,
+        "lng": 101.4700911
       }
     },
     "Kuala Selangor": {
@@ -698,6 +1322,42 @@ const CITY_COORDINATES = {
       "Jeram": {
         "lat": 3.2257524,
         "lng": 101.3046654
+      },
+      "P/A Pekan Tg. Karang": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Tg. Karang": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Rantau Panjang": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Kg. Asahan": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Kg. Lubuk Jaya": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Teluk Penyamun": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "P/A Sg. Yu 1": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Parit Mahang": {
+        "lat": 3.3247995,
+        "lng": 101.3447
+      },
+      "Kg. Bukit Kerayong": {
+        "lat": 3.3247995,
+        "lng": 101.3447
       }
     },
     "Hulu Selangor": {
@@ -724,6 +1384,38 @@ const CITY_COORDINATES = {
       "Rasa": {
         "lat": 3.4962942,
         "lng": 101.6322127
+      },
+      "Kerling": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Ampang Pecah": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Ulu Yam": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Kg. Timah": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Kg. Sungai Buaya": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Tanjung Malim": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Kg. Sg. Selisek": {
+        "lat": 3.4893318,
+        "lng": 101.607553
+      },
+      "Jambatan SKC": {
+        "lat": 3.4893318,
+        "lng": 101.607553
       }
     },
     "Sabak Bernam": {
@@ -738,6 +1430,10 @@ const CITY_COORDINATES = {
       "Sekinchan": {
         "lat": 3.506428,
         "lng": 101.1026777
+      },
+      "Sg. Air Tawar": {
+        "lat": 3.621849,
+        "lng": 101.0604212
       }
     }
   },
@@ -774,6 +1470,14 @@ const CITY_COORDINATES = {
       "Lahat": {
         "lat": 4.5395309,
         "lng": 101.0531217
+      },
+      "Kg. Cik Zainal": {
+        "lat": 4.5648547,
+        "lng": 101.0916841
+      },
+      "Kuala Pari": {
+        "lat": 4.5648547,
+        "lng": 101.0916841
       }
     },
     "Larut Matang Selama": {
@@ -796,6 +1500,18 @@ const CITY_COORDINATES = {
       "Kuala Sepetang": {
         "lat": 4.8380794,
         "lng": 100.6286482
+      },
+      "Bekalan Ijok": {
+        "lat": 4.8589664,
+        "lng": 100.7146286
+      },
+      "Bt. 14 Batu Kurau": {
+        "lat": 4.8589664,
+        "lng": 100.7146286
+      },
+      "Pondok Tanjung": {
+        "lat": 4.8589664,
+        "lng": 100.7146286
       }
     },
     "Manjung": {
@@ -828,6 +1544,10 @@ const CITY_COORDINATES = {
       "Langkap": {
         "lat": 4.0776194,
         "lng": 101.1646888
+      },
+      "Changkat Jong": {
+        "lat": 4.0503977,
+        "lng": 101.0954364
       }
     },
     "Bagan Datuk": {
@@ -842,6 +1562,10 @@ const CITY_COORDINATES = {
       "Rungkup": {
         "lat": 3.8905712,
         "lng": 100.8164375
+      },
+      "Pasang Api": {
+        "lat": 3.9004582,
+        "lng": 100.8858412
       }
     },
     "Kerian": {
@@ -860,6 +1584,10 @@ const CITY_COORDINATES = {
       "Tanjung Piandang": {
         "lat": 5.076798,
         "lng": 100.386678
+      },
+      "Kolam Air Bukit Merah": {
+        "lat": 5.0551799,
+        "lng": 100.4589579
       }
     },
     "Kuala Kangsar": {
@@ -874,6 +1602,18 @@ const CITY_COORDINATES = {
       "Padang Rengas": {
         "lat": 4.7781201,
         "lng": 100.857519
+      },
+      "Kg. Lintang": {
+        "lat": 4.7879243,
+        "lng": 100.9610541
+      },
+      "Jam. Iskandar": {
+        "lat": 4.7879243,
+        "lng": 100.9610541
+      },
+      "Pekan Manong": {
+        "lat": 4.7879243,
+        "lng": 100.9610541
       }
     },
     "Hulu Perak": {
@@ -888,6 +1628,10 @@ const CITY_COORDINATES = {
       "Pengkalan Hulu": {
         "lat": 5.7057571,
         "lng": 100.9994459
+      },
+      "Kuala Kenderong": {
+        "lat": 5.4142539,
+        "lng": 101.0305894
       }
     },
     "Batang Padang": {
@@ -930,6 +1674,10 @@ const CITY_COORDINATES = {
       "Malim Nawar": {
         "lat": 4.355982,
         "lng": 101.112187
+      },
+      "Kg. Baru Kuala Dipang": {
+        "lat": 4.327991,
+        "lng": 101.1310935
       }
     },
     "Perak Tengah": {
@@ -940,6 +1688,18 @@ const CITY_COORDINATES = {
       "Parit": {
         "lat": 4.4768608,
         "lng": 100.9093896
+      },
+      "Kg. Permata Guntung": {
+        "lat": 4.4213445,
+        "lng": 100.9347777
+      },
+      "Teluk Sena": {
+        "lat": 4.4213445,
+        "lng": 100.9347777
+      },
+      "Kg. Gajah": {
+        "lat": 4.4213445,
+        "lng": 100.9347777
       }
     }
   },
@@ -956,6 +1716,10 @@ const CITY_COORDINATES = {
       "Langgar": {
         "lat": 6.1166817,
         "lng": 100.3690472
+      },
+      "Jambatan Lebuhraya": {
+        "lat": 6.1389117,
+        "lng": 100.369028
       }
     },
     "Kuala Muda": {
@@ -992,6 +1756,10 @@ const CITY_COORDINATES = {
       "Napoh": {
         "lat": 6.3638006,
         "lng": 100.4225335
+      },
+      "Kg. Bata": {
+        "lat": 6.3879369,
+        "lng": 100.4199908
       }
     },
     "Kulim": {
@@ -1010,6 +1778,18 @@ const CITY_COORDINATES = {
       "Padang Meha": {
         "lat": 5.5031139,
         "lng": 100.5940129
+      },
+      "Kg. Permatang Durian": {
+        "lat": 5.4309244,
+        "lng": 100.5805654
+      },
+      "Kg. Baru": {
+        "lat": 5.4309244,
+        "lng": 100.5805654
+      },
+      "Wang Pinang": {
+        "lat": 5.4309244,
+        "lng": 100.5805654
       }
     },
     "Langkawi": {
@@ -1038,6 +1818,18 @@ const CITY_COORDINATES = {
       "Kupang": {
         "lat": 5.6380802,
         "lng": 100.8428118
+      },
+      "Kg. Sedim": {
+        "lat": 5.5985601,
+        "lng": 100.761574
+      },
+      "Kg. Padang Pulai": {
+        "lat": 5.5985601,
+        "lng": 100.761574
+      },
+      "Tanjung Pari": {
+        "lat": 5.5985601,
+        "lng": 100.761574
       }
     },
     "Yan": {
@@ -1048,10 +1840,30 @@ const CITY_COORDINATES = {
       "Guar Chempedak": {
         "lat": 5.8585298,
         "lng": 100.4582892
+      },
+      "Kg. Singkir Genting": {
+        "lat": 5.8534026,
+        "lng": 100.4367395
+      },
+      "Titi Teras": {
+        "lat": 5.8534026,
+        "lng": 100.4367395
+      },
+      "Kg. Perupok": {
+        "lat": 5.8534026,
+        "lng": 100.4367395
       }
     },
     "Sik": {
       "Sik Town": {
+        "lat": 5.9239011,
+        "lng": 100.8231021
+      },
+      "Ulu Jerai Namek": {
+        "lat": 5.9239011,
+        "lng": 100.8231021
+      },
+      "Sek. Keb. Sri Ampang": {
         "lat": 5.9239011,
         "lng": 100.8231021
       }
@@ -1060,10 +1872,34 @@ const CITY_COORDINATES = {
       "Kuala Nerang": {
         "lat": 6.2507418,
         "lng": 100.6099783
+      },
+      "Kg Perik": {
+        "lat": 6.2507418,
+        "lng": 100.6099783
+      },
+      "Kilang Gula Padang Terap": {
+        "lat": 6.2507418,
+        "lng": 100.6099783
+      },
+      "Naka": {
+        "lat": 6.2507418,
+        "lng": 100.6099783
+      },
+      "Jambatan Bukit Buloh": {
+        "lat": 6.2507418,
+        "lng": 100.6099783
       }
     },
     "Pendang": {
       "Pendang Town": {
+        "lat": 5.9720841,
+        "lng": 100.5501852
+      },
+      "Pekan Pendang": {
+        "lat": 5.9720841,
+        "lng": 100.5501852
+      },
+      "Kubur Panjang": {
         "lat": 5.9720841,
         "lng": 100.5501852
       }
@@ -1072,10 +1908,18 @@ const CITY_COORDINATES = {
       "Serdang Town": {
         "lat": 5.20965,
         "lng": 100.6119066
+      },
+      "Kg. Majidee Tengah": {
+        "lat": 5.20965,
+        "lng": 100.6119066
       }
     },
     "Pokok Sena": {
       "Pokok Sena Town": {
+        "lat": 6.1685074,
+        "lng": 100.5185454
+      },
+      "Kg. Pokok Sena Lama": {
         "lat": 6.1685074,
         "lng": 100.5185454
       }
@@ -1102,6 +1946,34 @@ const CITY_COORDINATES = {
       "Sungai Lembing": {
         "lat": 3.9160548,
         "lng": 103.0342962
+      },
+      "Kem Pesona": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Empangan Chereh": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Kuantan By Pass": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Sg. Rimau": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Sri Damai": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Jln. Pekan-Kuantan": {
+        "lat": 3.852113,
+        "lng": 103.2313508
+      },
+      "Jam. Gelugor": {
+        "lat": 3.852113,
+        "lng": 103.2313508
       }
     },
     "Bentong": {
@@ -1120,6 +1992,18 @@ const CITY_COORDINATES = {
       "Bukit Tinggi": {
         "lat": 3.3479336,
         "lng": 101.8208589
+      },
+      "Sg. Benus": {
+        "lat": 3.3716037,
+        "lng": 101.8556729
+      },
+      "Kuala Marong": {
+        "lat": 3.3716037,
+        "lng": 101.8556729
+      },
+      "Kg. Lengkong": {
+        "lat": 3.3716037,
+        "lng": 101.8556729
       }
     },
     "Temerloh": {
@@ -1138,6 +2022,14 @@ const CITY_COORDINATES = {
       "Kuala Krau": {
         "lat": 3.7173932,
         "lng": 102.3661587
+      },
+      "Kg. Mempateh": {
+        "lat": 3.5777393,
+        "lng": 102.2894986
+      },
+      "Lubuk Pasu": {
+        "lat": 3.5777393,
+        "lng": 102.2894986
       }
     },
     "Cameron Highlands": {
@@ -1160,6 +2052,34 @@ const CITY_COORDINATES = {
       "Blue Valley": {
         "lat": 4.5844912,
         "lng": 101.4090319
+      },
+      "Hulu Sg. Ringlet": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Middle Sg. Ringlet": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Pekan Ringlet": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Ikan": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Tringkap": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Jambatan Kebun": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
+      },
+      "Pos Leryar": {
+        "lat": 4.5115989,
+        "lng": 101.3938992
       }
     },
     "Pekan": {
@@ -1170,6 +2090,22 @@ const CITY_COORDINATES = {
       "Chini": {
         "lat": 3.3712626,
         "lng": 102.9613522
+      },
+      "Kuala Sg. Chini": {
+        "lat": 3.4556598,
+        "lng": 103.1967671
+      },
+      "Jam. Chini": {
+        "lat": 3.4556598,
+        "lng": 103.1967671
+      },
+      "Paloh Hinai": {
+        "lat": 3.4556598,
+        "lng": 103.1967671
+      },
+      "Pahang Tua": {
+        "lat": 3.4556598,
+        "lng": 103.1967671
       }
     },
     "Rompin": {
@@ -1184,6 +2120,30 @@ const CITY_COORDINATES = {
       "Tioman Island": {
         "lat": 2.8065444,
         "lng": 104.1721564
+      },
+      "Kg. Kerpal": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
+      },
+      "Rumah Pam Setajam": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
+      },
+      "Kg. Denai": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
+      },
+      "Kastam Tg. Gemok": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
+      },
+      "Pukin": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
+      },
+      "Tanjung Gemok": {
+        "lat": 2.8542202,
+        "lng": 103.6177593
       }
     },
     "Jerantut": {
@@ -1194,6 +2154,22 @@ const CITY_COORDINATES = {
       "Kuala Tembeling": {
         "lat": 4.0746074,
         "lng": 102.3229998
+      },
+      "Kg. Bantal Seberang": {
+        "lat": 4.1790105,
+        "lng": 102.4402615
+      },
+      "Kuala Tahan": {
+        "lat": 4.1790105,
+        "lng": 102.4402615
+      },
+      "Kg. Merting": {
+        "lat": 4.1790105,
+        "lng": 102.4402615
+      },
+      "Jerantut Feri": {
+        "lat": 4.1790105,
+        "lng": 102.4402615
       }
     },
     "Raub": {
@@ -1208,6 +2184,26 @@ const CITY_COORDINATES = {
       "Fraser’s Hill": {
         "lat": 3.7050303,
         "lng": 101.7479665
+      },
+      "Jam. Sg. Dong": {
+        "lat": 3.8003711,
+        "lng": 101.8258011
+      },
+      "Gali @ Jam.Sg. Gali": {
+        "lat": 3.8003711,
+        "lng": 101.8258011
+      },
+      "Kg. Pos": {
+        "lat": 3.8003711,
+        "lng": 101.8258011
+      },
+      "Batu Malim": {
+        "lat": 3.8003711,
+        "lng": 101.8258011
+      },
+      "Kg. Peruas": {
+        "lat": 3.8003711,
+        "lng": 101.8258011
       }
     },
     "Lipis": {
@@ -1218,6 +2214,22 @@ const CITY_COORDINATES = {
       "Merapoh": {
         "lat": 4.6932127,
         "lng": 102.0031557
+      },
+      "Kuala Medang": {
+        "lat": 4.4402127,
+        "lng": 102.0280878
+      },
+      "Jam. Chegar Perah": {
+        "lat": 4.4402127,
+        "lng": 102.0280878
+      },
+      "Jeti Lipis": {
+        "lat": 4.4402127,
+        "lng": 102.0280878
+      },
+      "Jeram Bungor": {
+        "lat": 4.4402127,
+        "lng": 102.0280878
       }
     },
     "Maran": {
@@ -1232,6 +2244,30 @@ const CITY_COORDINATES = {
       "Sri Jaya": {
         "lat": 3.6711139,
         "lng": 102.8740093
+      },
+      "Kg. Jengka Bt.13": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
+      },
+      "Kg. Chenor": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
+      },
+      "Jengka 5": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
+      },
+      "Jam. Sg. Kundang": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
+      },
+      "Lubuk Paku": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
+      },
+      "Kg. Subuh": {
+        "lat": 3.6799074,
+        "lng": 102.6876963
       }
     },
     "Bera": {
@@ -1242,6 +2278,22 @@ const CITY_COORDINATES = {
       "Triang": {
         "lat": 3.2461919,
         "lng": 102.4112562
+      },
+      "Jamb. Keretapi": {
+        "lat": 3.2595114,
+        "lng": 102.431763
+      },
+      "Waterfront": {
+        "lat": 3.2595114,
+        "lng": 102.431763
+      },
+      "Jam. Pdg. Gudang": {
+        "lat": 3.2595114,
+        "lng": 102.431763
+      },
+      "Jam. Sg. Bera": {
+        "lat": 3.2595114,
+        "lng": 102.431763
       }
     }
   },
@@ -1368,6 +2420,22 @@ const CITY_COORDINATES = {
       "Losong": {
         "lat": 5.3185729,
         "lng": 103.1021128
+      },
+      "Rumah Pam Pulau Bahagia": {
+        "lat": 5.3260201,
+        "lng": 103.1247618
+      },
+      "Muzium Terengganu": {
+        "lat": 5.3260201,
+        "lng": 103.1247618
+      },
+      "Bukit Tumbuh": {
+        "lat": 5.3260201,
+        "lng": 103.1247618
+      },
+      "Drawbridge": {
+        "lat": 5.3260201,
+        "lng": 103.1247618
       }
     },
     "Kuala Nerus": {
@@ -1382,6 +2450,14 @@ const CITY_COORDINATES = {
       "Batu Rakit": {
         "lat": 5.4281765,
         "lng": 103.0243918
+      },
+      "Kg. Jeram": {
+        "lat": 5.3951814,
+        "lng": 103.0821855
+      },
+      "Padang Kemunting": {
+        "lat": 5.3951814,
+        "lng": 103.0821855
       }
     },
     "Kemaman": {
@@ -1400,6 +2476,26 @@ const CITY_COORDINATES = {
       "Kaman": {
         "lat": 4.2395837,
         "lng": 103.1912607
+      },
+      "Jamb. Air Putih": {
+        "lat": 4.3353586,
+        "lng": 103.3732628
+      },
+      "Kg. Baru Kemasik": {
+        "lat": 4.3353586,
+        "lng": 103.3732628
+      },
+      "Kg. Yak Yah": {
+        "lat": 4.3353586,
+        "lng": 103.3732628
+      },
+      "Kg. Sg. Mas": {
+        "lat": 4.3353586,
+        "lng": 103.3732628
+      },
+      "Kg. Geliga": {
+        "lat": 4.3353586,
+        "lng": 103.3732628
       }
     },
     "Dungun": {
@@ -1410,6 +2506,18 @@ const CITY_COORDINATES = {
       "Paka": {
         "lat": 4.6379224,
         "lng": 103.4362208
+      },
+      "Kg. Pasir Raja": {
+        "lat": 4.7011598,
+        "lng": 103.4273336
+      },
+      "Jambatan Jerangau": {
+        "lat": 4.7011598,
+        "lng": 103.4273336
+      },
+      "Kuala Jengai": {
+        "lat": 4.7011598,
+        "lng": 103.4273336
       }
     },
     "Besut": {
@@ -1424,6 +2532,22 @@ const CITY_COORDINATES = {
       "Kampung Raja": {
         "lat": 5.7956607,
         "lng": 102.563529
+      },
+      "Jambatan Jerteh": {
+        "lat": 5.784684,
+        "lng": 102.5377247
+      },
+      "Jambatan Keruak": {
+        "lat": 5.784684,
+        "lng": 102.5377247
+      },
+      "Kg. La": {
+        "lat": 5.784684,
+        "lng": 102.5377247
+      },
+      "Kg. Tembila": {
+        "lat": 5.784684,
+        "lng": 102.5377247
       }
     },
     "Marang": {
@@ -1434,16 +2558,100 @@ const CITY_COORDINATES = {
       "Wakaf Tapai": {
         "lat": 5.1325893,
         "lng": 103.0950337
+      },
+      "Jambatan Pengkalan Berangan": {
+        "lat": 5.149628,
+        "lng": 103.1308502
+      },
+      "Jamb. Pengkalan Berangan": {
+        "lat": 5.149628,
+        "lng": 103.1308502
       }
     },
     "Setiu": {
       "Bandar Permaisuri": {
         "lat": 5.5296635,
         "lng": 102.7464631
+      },
+      "Stewong Jatuh": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Kg. Langkap": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Kg. Bukit": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Jambatan Permaisuri": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Jambatan Penarik": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Jambatan Chalok": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Jambatan Guntung": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Kg. Mangkuk": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
+      },
+      "Jambatan Che Selamah": {
+        "lat": 5.5296635,
+        "lng": 102.7464631
       }
     },
     "Hulu Terengganu": {
       "Kuala Berang": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kg. Menerong": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Pulau Ilo": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kg. Dura": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Jambatan Kuala Berang": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kg. Tanggol": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kg. Felda Mengkawang": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Felda Mengkawang": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kg. Sekayu": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kenyir Elephant Village": {
+        "lat": 5.0733842,
+        "lng": 103.0091363
+      },
+      "Kuala Ping": {
         "lat": 5.0733842,
         "lng": 103.0091363
       }
@@ -1478,6 +2686,50 @@ const CITY_COORDINATES = {
       "Pulau Tikus": {
         "lat": 5.4027803,
         "lng": 100.3144595
+      },
+      "Jalan P.Ramlee": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Jalan Scotland": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Kolam Takungan Sg. Dondang M/S": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Kolam Takungan Sg. Dondang U/S": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Kolam Takungan Sg. Dondang D/S": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Kg. Dua Bukit": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Muara Sg. Pinang S18": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Jln. Langkawi": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Lorong Batu Lanchang": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Kolam Sg. Dondang": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
+      },
+      "Jalan P. Ramlee": {
+        "lat": 5.4213662,
+        "lng": 100.3007642
       }
     },
     "Barat Daya": {
@@ -1496,6 +2748,14 @@ const CITY_COORDINATES = {
       "Teluk Bahang": {
         "lat": 5.4578149,
         "lng": 100.2147458
+      },
+      "Ara": {
+        "lat": 5.3445867,
+        "lng": 100.2452688
+      },
+      "Politeknik Balik Pulau": {
+        "lat": 5.3445867,
+        "lng": 100.2452688
       }
     },
     "Seberang Perai Utara": {
@@ -1514,6 +2774,30 @@ const CITY_COORDINATES = {
       "Penaga": {
         "lat": 5.4461242,
         "lng": 100.5118282
+      },
+      "Ara Kuda": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
+      },
+      "Bumbung Lima": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
+      },
+      "Desa Murni Sg. Dua": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
+      },
+      "Pintu Air Sg. Tembus": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
+      },
+      "Pejabat JPS SPU": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
+      },
+      "Rumah Pam Taman Limbungan": {
+        "lat": 5.4530431,
+        "lng": 100.4573774
       }
     },
     "Seberang Perai Tengah": {
@@ -1536,6 +2820,22 @@ const CITY_COORDINATES = {
       "Juru": {
         "lat": 5.3541771,
         "lng": 100.4529053
+      },
+      "JPS SPT": {
+        "lat": 5.3582598,
+        "lng": 100.4435734
+      },
+      "Simpang Ampat": {
+        "lat": 5.3582598,
+        "lng": 100.4435734
+      },
+      "Kg. Labuh Banting": {
+        "lat": 5.3582598,
+        "lng": 100.4435734
+      },
+      "Empangan Juru": {
+        "lat": 5.3582598,
+        "lng": 100.4435734
       }
     },
     "Seberang Perai Selatan": {
@@ -1554,6 +2854,14 @@ const CITY_COORDINATES = {
       "Sungai Bakap": {
         "lat": 5.2234935,
         "lng": 100.4961868
+      },
+      "Tidal Control Gate Kebun Baru": {
+        "lat": 5.2265268,
+        "lng": 100.4765018
+      },
+      "Kecil": {
+        "lat": 5.2265268,
+        "lng": 100.4765018
       }
     }
   },

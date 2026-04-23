@@ -25,20 +25,23 @@ const OPTIONAL_INFOBANJIR_SOURCES = new Set(["siren"]);
 const NADMA_DISASTER_INFO_URL = "https://www.nadma.gov.my/bm/#informasi-bencana";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const WEATHER_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1000;
+const SIREN_CACHE_TTL_MS = 5 * 60 * 1000;
+const SIREN_TELEMETRY_URL =
+  "https://publicinfobanjir.water.gov.my/cerapan/siren/siren-data/page-siren-telemetri/";
 
 const STATE_CODE_MAP = {
   Selangor: ["SEL", "10"],
   Melaka: ["MLK", "04"],
   Johor: ["JHR", "01"],
   Pahang: ["PHG", "06"],
-  Kelantan: ["KTN", "03"],
+  Kelantan: ["KEL", "KTN", "03"],
   Kedah: ["KDH", "02"],
   Perak: ["PRK", "08"],
   Perlis: ["PLS", "09"],
   "Pulau Pinang": ["PNG", "07"],
   Terengganu: ["TRG", "11"],
-  Sabah: ["Sabah", "sabah", "SBH", "12"],
-  Sarawak: ["Sarawak", "sarawak", "SWK", "13"],
+  Sabah: ["SAB", "Sabah", "sabah", "SBH", "12"],
+  Sarawak: ["SRK", "Sarawak", "sarawak", "SWK", "13"],
   "Negeri Sembilan": ["NSN", "05"],
   "Kuala Lumpur": ["Wilayah Persekutuan Kuala Lumpur", "Kuala Lumpur", "kuala lumpur", "WKL", "14"],
   "Wilayah Persekutuan Kuala Lumpur": ["Wilayah Persekutuan Kuala Lumpur", "Kuala Lumpur", "kuala lumpur", "WKL", "14"],
@@ -52,6 +55,7 @@ const stateCodeCache = new Map();
 const weatherCache = new Map();
 const weatherPendingRequests = new Map();
 let metMalaysiaCooldownUntil = 0;
+const sirenCache = new Map();
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -76,6 +80,12 @@ function toNumber(value) {
 
 function compactText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function isRecentTimestamp(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return Date.now() - date.getTime() <= 6 * 60 * 60 * 1000;
 }
 
 function isGenericPortalText(value) {
@@ -123,192 +133,6 @@ function mapStatusFromThresholds(waterLevel, thresholds) {
     waterLevel !== null &&
     waterLevel >= thresholds.warning
   ) {
-    return "Risk Rising";
-  }
-
-  if (
-    thresholds.alert !== null &&
-    waterLevel !== null &&
-    waterLevel >= thresholds.alert
-  ) {
-    return "Warning";
-  }
-
-  return "Safe";
-}
-
-function mapAction(status) {
-  if (status === "Flood Confirmed") return "Evacuate immediately";
-  if (status === "Risk Rising") return "Prepare essentials and monitor updates";
-  if (status === "Warning") return "Avoid low-lying areas and stay alert";
-  return "No immediate action needed";
-}
-
-function getRiskLabel(status) {
-  if (status === "Flood Confirmed") return "Danger";
-  if (status === "Risk Rising") return "Warning";
-  if (status === "Warning") return "Alert";
-  return "Normal";
-}
-
-function buildUserSummary(item) {
-  const locationName = item.location || item.district || "this area";
-
-  if (item.status === "Safe") {
-    return `${locationName} is currently marked Safe. No immediate action is needed, but keep checking updates if heavy rain continues.`;
-  }
-
-  return `${locationName} is currently marked ${item.status}. ${item.action || "Follow official guidance and monitor updates."}`;
-}
-
-function buildSourceNote(item, optionalSources = {}) {
-  const sources = [];
-  const hasInfobanjirContent = Boolean(
-    optionalSources.publicInfobanjir?.floodAlert?.summary ||
-    optionalSources.publicInfobanjir?.metAlert?.summary ||
-    optionalSources.publicInfobanjir?.currentAlert?.summary ||
-    optionalSources.publicInfobanjir?.siren?.summary
-  );
-
-  if (item.stationName || item.waterLevel !== null) {
-    sources.push("live JPS water-level data");
-  }
-
-  if (optionalSources.weather?.forecast || optionalSources.weather?.warning) {
-    sources.push("METMalaysia or Public Infobanjir weather alerts");
-  }
-
-  if (optionalSources.officialNotice?.notice) {
-    sources.push("NADMA official notices");
-  }
-
-  if (hasInfobanjirContent) {
-    sources.push("Public Infobanjir notices");
-  }
-
-  if (sources.length === 0) {
-    return "Based on the latest available flood monitoring data.";
-  }
-
-  return `Based on ${sources.join(", ")}.`;
-}
-
-function buildUpdatesFeed(item) {
-  const updates = [];
-
-  if (item?.latestUpdate?.summary) {
-    updates.push({
-      type: item.latestUpdate.type || "Update",
-      status: item.status || "Safe",
-      summary: item.latestUpdate.summary,
-      lastUpdate: item.lastUpdate || "",
-    });
-  }
-
-  if (item?.officialNotice?.notice) {
-    updates.push({
-      type: item.officialNotice.source || "Official notice",
-      status: item.status || "Safe",
-      summary: item.officialNotice.notice,
-      lastUpdate: item.officialNotice.lastUpdate || item.lastUpdate || "",
-    });
-  }
-
-  return updates;
-}
-
-function extractRows(payload) {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  if (Array.isArray(payload?.data)) {
-    return payload.data;
-  }
-
-  if (Array.isArray(payload?.aaData)) {
-    return payload.aaData;
-  }
-
-  if (typeof payload === "string") {
-    const $ = cheerio.load(payload);
-    const rows = [];
-
-    $("table tr").each((_, tr) => {
-      const cells = $(tr)
-        .find("td")
-        .map((__, td) => $(td).text().replace(/\s+/g, " ").trim())
-        .get();
-
-      if (cells.length >= 12) {
-        rows.push(cells);
-      }
-    });
-
-    return rows;
-  }
-
-  return [];
-}
-
-async function fetchJpsWaterLevelRows(stateCode) {
-  const url = `https://publicinfobanjir.water.gov.my/aras-air/aras-air-data/?state=${encodeURIComponent(stateCode)}&district=ALL&station=ALL&lang=en`;
-  const response = await axios.get(url, {
-    timeout: 15000,
-    headers: {
-      "User-Agent": "Mozilla/5.0 FloodAlert/1.0",
-      Accept: "application/json,text/html;q=0.9,*/*;q=0.8",
-    },
-  });
-
-  return extractRows(response.data);
-}
-
-async function fetchPageText(url) {
-  const response = await axios.get(url, {
-    timeout: 10000,
-    headers: {
-      "User-Agent": "Mozilla/5.0 FloodAlert/1.0",
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    },
-  });
-  const $ = cheerio.load(response.data);
-
-  $("script, style, noscript, nav, header, footer, .menu, #menu, .sidebar, .navbar").remove();
-  return compactText($("body").text());
-}
-
-function getLastUpdateFromText(text) {
-  return compactText(text).match(/Last Update:\s*([^|]+)/i)?.[1]?.trim() || "";
-}
-
-function getRelevantText(text, terms, maxLength = 260) {
-  const normalizedText = compactText(text);
-  const normalizedTerms = terms.map(normalize).filter(Boolean);
-  const lowerText = normalize(normalizedText);
-  const matchIndex = normalizedTerms
-    .map((term) => lowerText.indexOf(term))
-    .filter((index) => index >= 0)
-    .sort((a, b) => a - b)[0];
-  const start = matchIndex >= 0 ? Math.max(0, matchIndex - 80) : 0;
-
-  return normalizedText.slice(start, start + maxLength).trim();
-}
-
-function mapStatusFromThresholds(waterLevel, thresholds) {
-  if (
-    thresholds.danger !== null &&
-    waterLevel !== null &&
-    waterLevel >= thresholds.danger
-  ) {
-    return "Flood Confirmed";
-  }
-
-  if (
-    thresholds.warning !== null &&
-    waterLevel !== null &&
-    waterLevel >= thresholds.warning
-  ) {
     return "Warning";
   }
 
@@ -324,6 +148,7 @@ function mapStatusFromThresholds(waterLevel, thresholds) {
 }
 
 function mapAction(status) {
+  if (status === "Evacuate") return "Evacuate immediately";
   if (status === "Flood Confirmed") return "Evacuate immediately";
   if (status === "Risk Rising") return "Prepare essentials and monitor updates";
   if (status === "Warning") return "Avoid low-lying areas and stay alert";
@@ -331,6 +156,7 @@ function mapAction(status) {
 }
 
 function getRiskLabel(status) {
+  if (status === "Evacuate") return "Danger";
   if (status === "Flood Confirmed") return "Danger";
   if (status === "Warning") return "Warning";
   if (status === "Risk Rising") return "Alert";
@@ -448,6 +274,131 @@ async function fetchJpsWaterLevelRows(stateCode) {
   });
 
   return extractRows(response.data);
+}
+
+function pickSirenStateCode(state) {
+  const codes = getStateCodes(state);
+  const preferred = codes.find((code) => /^[A-Z]{3}$/i.test(String(code || "")));
+  return preferred || codes[0] || "";
+}
+
+function mapSirenRisk(statusText) {
+  const text = normalize(statusText);
+  if (!text) return { level: 0, label: "Unknown" };
+  if (text.includes("high")) return { level: 2, label: "High" };
+  if (text.includes("low")) return { level: 1, label: "Low" };
+  if (text.includes("normal")) return { level: 0, label: "Normal" };
+  return { level: 1, label: compactText(statusText) };
+}
+
+function parseSirenTelemetryRows(html) {
+  const $ = cheerio.load(html || "");
+  const rows = [];
+
+  $("#responstable tr").each((_, tr) => {
+    const cells = $(tr)
+      .find("td")
+      .map((__, td) => compactText($(td).text()))
+      .get();
+
+    // Expected columns:
+    // 0 No, 1 New Station ID, 2 Station Code, 3 Station Name, 4 Last Updated,
+    // 5 District, 6 State, 7 Warning Status, 8 Warning, 9 Danger, 10 Map
+    if (cells.length >= 8 && /^\d+$/.test(cells[0] || "")) {
+      rows.push({
+        stationName: cells[3] || "",
+        lastUpdated: cells[4] || "",
+        district: cells[5] || "",
+        state: cells[6] || "",
+        warningStatus: cells[7] || "",
+      });
+    }
+  });
+
+  return rows;
+}
+
+async function fetchSirenTelemetryRows(state, district = "ALL", station = "ALL") {
+  const stateCode = pickSirenStateCode(state);
+  if (!stateCode) return [];
+
+  const cacheKey = `${normalize(state)}|${String(district || "ALL").toUpperCase()}|${String(station || "ALL").toUpperCase()}`;
+  const cached = sirenCache.get(cacheKey);
+  if (cached && Date.now() - cached.fetchedAt < SIREN_CACHE_TTL_MS) {
+    return cached.rows;
+  }
+
+  const url = `${SIREN_TELEMETRY_URL}?state=${encodeURIComponent(stateCode)}&district=${encodeURIComponent(district || "ALL")}&station=${encodeURIComponent(station || "ALL")}&lang=en`;
+  const response = await axios.get(url, {
+    timeout: 15000,
+    headers: {
+      "User-Agent": "Mozilla/5.0 FloodAlert/1.0",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    },
+  });
+
+  const rows = parseSirenTelemetryRows(response.data);
+  sirenCache.set(cacheKey, { fetchedAt: Date.now(), rows, url });
+  return rows;
+}
+
+async function fetchSirenTelemetryContext(state, district, location) {
+  const rows = await fetchSirenTelemetryRows(state, "ALL", "ALL");
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const districtNeedles = unique([
+    district,
+    withoutCommonSuffixes(district),
+    ...getDistrictMatchingAliases(state, district),
+  ])
+    .map(normalize)
+    .filter(Boolean);
+
+  const locationNeedles = unique([
+    location,
+    withoutCommonSuffixes(location),
+    ...getLocationAliases(location, district, state),
+  ])
+    .map(normalize)
+    .filter(Boolean);
+
+  const inDistrict = rows.filter((row) =>
+    districtNeedles.some((needle) => normalize(row.district) === needle)
+  );
+
+  const directMatches = inDistrict.filter((row) =>
+    locationNeedles.some((needle) => stationMatchesCityTarget(row.stationName, needle))
+  );
+
+  const candidates = directMatches.length > 0 ? directMatches : inDistrict;
+  const scored = candidates
+    .map((row) => ({ row, risk: mapSirenRisk(row.warningStatus) }))
+    .sort((a, b) => b.risk.level - a.risk.level);
+
+  const strongest = scored[0];
+  const lastUpdated = strongest?.row?.lastUpdated || "";
+  const hasTimestamp = Boolean(lastUpdated) && !normalize(lastUpdated).includes("not available");
+
+  return {
+    source: "Public Infobanjir",
+    type: "Siren Telemetry",
+    state,
+    district,
+    location,
+    strongestStatus: strongest?.risk?.label || "Normal",
+    isActive: (strongest?.risk?.level || 0) > 0,
+    lastUpdated,
+    hasTimestamp,
+    isRecent: isRecentTimestamp(lastUpdated),
+    matchedStations: (directMatches.length > 0 ? directMatches : scored.slice(0, 5).map((s) => s.row)).map((row) => ({
+      stationName: row.stationName,
+      district: row.district,
+      warningStatus: row.warningStatus,
+      lastUpdated: row.lastUpdated,
+    })),
+  };
 }
 
 async function fetchPageText(url) {
@@ -953,6 +904,20 @@ function getCityStationOverrides(state, district, city) {
   return CITY_STATION_OVERRIDES?.[state]?.[district]?.[city] || {};
 }
 
+function getDistrictMatchingAliases(state, district) {
+  const aliases = {
+    Perak: {
+      "Larut Matang Selama": ["Larut Matang dan Selama"],
+    },
+    "Pulau Pinang": {
+      "Timur Laut": ["Timur Laut Pulau Pinang"],
+      "Barat Daya": ["Barat Daya Pulau Pinang"],
+    },
+  };
+
+  return aliases?.[state]?.[district] || [];
+}
+
 function getDistanceBand(distanceKm) {
   if (!Number.isFinite(distanceKm)) {
     return "unknown";
@@ -1052,6 +1017,7 @@ function findDistrictNearbyStations(city, district, state, rawStations) {
   const districtTargets = unique([
     district,
     withoutCommonSuffixes(district),
+    ...getDistrictMatchingAliases(state, district),
     city,
     withoutCommonSuffixes(city),
   ])
@@ -1080,6 +1046,10 @@ function chooseNearbyRiskContext(estimate, nearestStation, stations) {
     action: estimate.action,
     reason: estimate.reason,
   };
+
+  if (estimate.status === "Evacuate") {
+    return final;
+  }
 
   if (!nearestStation) {
     return final;
@@ -1114,6 +1084,10 @@ function chooseNearbyRiskContext(estimate, nearestStation, stations) {
 
   if (nearestBand === "weak") {
     if (estimate.status === "Safe") {
+      return final;
+    }
+
+    if (estimate.status === "Flood Confirmed") {
       return final;
     }
 
@@ -1168,7 +1142,7 @@ function chooseDistrictFallbackRiskContext(
     return final;
   }
 
-  if (estimate.status === "Flood Confirmed") {
+  if (estimate.status === "Evacuate" || estimate.status === "Flood Confirmed") {
     return final;
   }
 
@@ -1197,7 +1171,42 @@ function chooseDistrictFallbackRiskContext(
   return final;
 }
 
-function estimateRiskFromAlerts(alerts) {
+function hasLiveOfficialSignal(text) {
+  const value = String(text || "");
+
+  return (
+    /last\s*update|last\s*updated|updated\s*at|kemaskini|dikemaskini|tarikh|masa/i.test(value) ||
+    /\b\d{1,2}\/\d{1,2}\/\d{4}\b/.test(value) ||
+    /\b\d{4}-\d{2}-\d{2}\b/.test(value) ||
+    /\b\d{1,2}:\d{2}\b/.test(value)
+  );
+}
+
+function matchesAlertContext(text, context = {}) {
+  const haystack = normalize(text);
+
+  if (!haystack) {
+    return false;
+  }
+
+  const candidates = unique([
+    context.location,
+    withoutCommonSuffixes(context.location),
+    context.district,
+    withoutCommonSuffixes(context.district),
+    context.state,
+  ])
+    .map(normalize)
+    .filter((value) => value && value.length >= 3);
+
+  if (candidates.length === 0) {
+    return false;
+  }
+
+  return candidates.some((needle) => haystack.includes(needle));
+}
+
+function estimateRiskFromAlerts(alerts, context = {}) {
   const { weather, officialNotice, publicInfobanjir } = alerts;
   const relevantInfobanjirText = [
     publicInfobanjir?.floodAlert?.hasRelevantText
@@ -1220,8 +1229,78 @@ function estimateRiskFromAlerts(alerts) {
   const officialFloodText = `${officialText} ${relevantInfobanjirText}`;
   const combinedText = `${weatherText} ${officialFloodText}`;
 
-  if (/evacuat|pemindahan|pindah|siren\s+(aktif|active|dibunyikan)|danger level|paras bahaya|bahaya/i.test(combinedText)) {
-    return { status: "Flood Confirmed", action: "Evacuate immediately", reason: "A severe official flood, siren, or evacuation signal is active." };
+  const hasRelevantInfobanjirSnippet = Boolean(
+    publicInfobanjir?.floodAlert?.hasRelevantText ||
+      publicInfobanjir?.metAlert?.hasRelevantText ||
+      publicInfobanjir?.currentAlert?.hasRelevantText ||
+      publicInfobanjir?.siren?.hasRelevantText
+  );
+  const hasRelevantOfficialText = Boolean(officialText) || hasRelevantInfobanjirSnippet;
+  const hasContextMatch = matchesAlertContext(officialFloodText, context);
+  const hasLiveSignal =
+    hasLiveOfficialSignal(officialFloodText) ||
+    Boolean(publicInfobanjir?.currentAlert?.hasRelevantText);
+
+  const sirenTelemetry = alerts?.sirenTelemetry;
+  const sirenRows = Array.isArray(alerts?.sirenRows) ? alerts.sirenRows : null;
+
+  if (!sirenTelemetry && sirenRows && context?.district && context?.state) {
+    const matching = sirenRows.filter(
+      (row) =>
+        normalize(row.state) === normalize(context.state) &&
+        normalize(row.district) === normalize(context.district)
+    );
+
+    const strongest = matching
+      .map((row) => ({ row, risk: mapSirenRisk(row.warningStatus) }))
+      .sort((a, b) => b.risk.level - a.risk.level)[0];
+
+    if (strongest?.risk?.level > 0) {
+      const lastUpdated = strongest.row.lastUpdated || "";
+      const hasTimestamp = Boolean(lastUpdated) && !normalize(lastUpdated).includes("not available");
+      const isRecent = isRecentTimestamp(lastUpdated);
+
+      if (hasTimestamp && isRecent) {
+        return {
+          status: "Evacuate",
+          action: "Evacuate immediately",
+          reason: "Official siren telemetry indicates an active warning in this district.",
+        };
+      }
+    }
+  }
+
+  if (
+    sirenTelemetry?.isActive &&
+    sirenTelemetry?.hasTimestamp &&
+    (sirenTelemetry?.isRecent || hasLiveOfficialSignal(sirenTelemetry?.lastUpdated)) &&
+    normalize(sirenTelemetry?.state) === normalize(context?.state || sirenTelemetry?.state) &&
+    normalize(sirenTelemetry?.district) === normalize(context?.district || sirenTelemetry?.district)
+  ) {
+    return {
+      status: "Evacuate",
+      action: "Evacuate immediately",
+      reason: "Official siren telemetry indicates an active warning in this district.",
+    };
+  }
+
+  // Strict "Evacuate" is official-only (NADMA/Public Infobanjir text), never weather-only.
+  // Guard rails to prevent false alarms:
+  // - require a context mention (state/district/location)
+  // - require a live/current signal (timestamp-ish text OR a relevant current alert snippet)
+  // - require official snippet relevance (avoid generic portal text)
+  if (
+    /evacuat|evakuasi|pemindahan|pindah|pusat pemindahan|siren\s+(aktif|active|dibunyikan)/i.test(officialFloodText) &&
+    hasRelevantOfficialText &&
+    hasContextMatch &&
+    hasLiveSignal
+  ) {
+    return { status: "Evacuate", action: "Evacuate immediately", reason: "An official evacuation or siren signal is active." };
+  }
+
+  // Severe official flood confirmation signals (official-only).
+  if (/danger level|paras bahaya|bahaya/i.test(officialFloodText)) {
+    return { status: "Flood Confirmed", action: "Evacuate immediately", reason: "A severe official flood confirmation signal is active." };
   }
   if (/amaran banjir|flood warning|current alert|official flood|banjir/i.test(officialFloodText)) {
     return { status: "Risk Rising", action: "Prepare essentials and monitor updates", reason: "An official flood-related alert is active." };
@@ -1233,12 +1312,12 @@ function estimateRiskFromAlerts(alerts) {
   return { status: "Safe", action: "No immediate action needed", reason: "No active flood or severe weather alerts." };
 }
 
-function getContextOnlyRisk(alerts, nearbyMatches = []) {
-  const estimate = estimateRiskFromAlerts(alerts);
+function getContextOnlyRisk(alerts, nearbyMatches = [], context = {}) {
+  const estimate = estimateRiskFromAlerts(alerts, context);
   const elevatedNearby = nearbyMatches.filter((item) => getRiskScore(item.status) >= getRiskScore("Risk Rising"));
   const hasElevatedNearby = elevatedNearby.length > 0;
   const hasStrongSupportingSignals =
-    estimate.status === "Risk Rising" || estimate.status === "Flood Confirmed";
+    estimate.status === "Risk Rising" || estimate.status === "Flood Confirmed" || estimate.status === "Evacuate";
 
   const reasons = [];
 
@@ -1250,6 +1329,17 @@ function getContextOnlyRisk(alerts, nearbyMatches = []) {
 
   if (hasStrongSupportingSignals) {
     reasons.push(estimate.reason);
+  }
+
+  if (estimate.status === "Evacuate") {
+    return {
+      status: "Evacuate",
+      action: "Evacuate immediately",
+      reason:
+        reasons.length > 0
+          ? `No direct JPS station is linked to this area. Official evacuation signal detected: ${reasons.join(". ")}.`
+          : "No direct JPS station is linked to this area, but an official evacuation signal is active.",
+    };
   }
 
   if (estimate.status === "Flood Confirmed") {
@@ -1374,7 +1464,7 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
   }));
   const hasNearbyJpsData = Boolean(highestNearby);
   const hasStateJpsData = rawStations.length > 0;
-  const estimate = estimateRiskFromAlerts(alerts);
+  const estimate = estimateRiskFromAlerts(alerts, { location: city, district, state });
   const nearbyContextSummary = hasNearbyJpsData
     ? nearbyMatchContext?.mode === "coordinates"
       ? `${stations.length} coordinate-matched station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station is ${nearestStation?.stationName || "-"} at ${nearestStation?.distanceKm ?? "-"} km with status ${nearestStation?.status || highestNearby.status}.`
@@ -1441,7 +1531,8 @@ async function getRawDataByCity(city, state, district = "", options = {}) {
   const weather = await fetchMetMalaysiaWeather(state, city);
   const officialNotice = await fetchNadmaNotice(state, city);
   const publicInfobanjir = await fetchPublicInfobanjirContext(state, city);
-  const alerts = { weather, officialNotice, publicInfobanjir };
+  const sirenTelemetry = await fetchSirenTelemetryContext(state, district, city);
+  const alerts = { weather, officialNotice, publicInfobanjir, sirenTelemetry };
 
   const computed = computeCityRisk(city, district, state, rawItems, alerts);
   const satellite =
@@ -1457,6 +1548,7 @@ async function getRawDataByCity(city, state, district = "", options = {}) {
     weather: alerts.weather || null,
     officialNotice: alerts.officialNotice || null,
     publicInfobanjir: alerts.publicInfobanjir || null,
+    sirenTelemetry: alerts.sirenTelemetry || null,
     satellite: satellite || null,
   };
 
@@ -1482,7 +1574,8 @@ async function getRawDataByState(state) {
   const weather = await fetchMetMalaysiaWeather(state, state);
   const officialNotice = await fetchNadmaNotice(state, state);
   const publicInfobanjir = await fetchPublicInfobanjirContext(state, state);
-  const alerts = { weather, officialNotice, publicInfobanjir };
+  const sirenRows = await fetchSirenTelemetryRows(state, "ALL", "ALL");
+  const alerts = { weather, officialNotice, publicInfobanjir, sirenRows };
 
   const districtsObj = MALAYSIA_LOCATION_DATA[state];
   if (!districtsObj) {

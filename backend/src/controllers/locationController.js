@@ -54,6 +54,29 @@ function mergeDefined(base, overrides) {
     return merged;
 }
 
+function buildShortFallbackSummary(location) {
+    const areaName = location?.location || "This area";
+    const status = location?.status || "Safe";
+
+    if (status === "Evacuate") {
+        return `${areaName}: Official evacuation signal is active. Evacuate immediately and follow authorities.`;
+    }
+
+    if (status === "Flood Confirmed") {
+        return `${areaName}: Flood confirmed nearby. Follow official instructions immediately.`;
+    }
+
+    if (status === "Warning") {
+        return `${areaName}: Warning level reached. Avoid low-lying areas and stay alert.`;
+    }
+
+    if (status === "Risk Rising") {
+        return `${areaName}: Risk is rising. Prepare essentials and monitor official updates.`;
+    }
+
+    return `${areaName}: No immediate flood risk now. Keep monitoring updates.`;
+}
+
 async function safelyAnalyzeLocation(location) {
     try {
         const aiResult = await analyzeLocation({
@@ -62,13 +85,27 @@ async function safelyAnalyzeLocation(location) {
         });
 
         const mergedLocation = mergeDefined(location, aiResult);
+        const baseStatus = location.status || "Safe";
+        const mergedStatus = mergedLocation.status || baseStatus;
+
+        // "Evacuate" is strictly rule-based (official-only). Never allow AI to set it,
+        // and never allow AI to downgrade it when it is already present.
+        const finalStatus =
+            baseStatus === "Evacuate"
+                ? "Evacuate"
+                : mergedStatus === "Evacuate"
+                ? baseStatus
+                : mergedStatus;
 
         return {
             ...mergedLocation,
             location: location.location,
             state: location.state,
-            status: mergedLocation.status || "Safe",
-            action: mergedLocation.action || "No immediate action needed",
+            status: finalStatus || "Safe",
+            action:
+                finalStatus === "Evacuate"
+                    ? "Evacuate immediately"
+                    : mergedLocation.action || "No immediate action needed",
             reason:
                 mergedLocation.reason ||
                 "No significant flood risk detected at the moment",
@@ -122,12 +159,8 @@ async function safelyAnalyzeLocation(location) {
             reason:
                 location.reason ||
                 "No significant flood risk detected at the moment",
-            aiSummary: location.latestUpdate?.summary || location.reason,
-            userSummary:
-                location.userSummary ||
-                location.latestUpdate?.summary ||
-                location.reason ||
-                "No significant flood risk detected at the moment.",
+            aiSummary: buildShortFallbackSummary(location),
+            userSummary: buildShortFallbackSummary(location),
             sourceNote:
                 location.sourceNote ||
                 "Based on the latest available flood monitoring data.",

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";
-import demoVideo from "../img/demoUse.mp4"; //video
+import demoVideo from "../img/demoUse.mp4"; //this is the video import stuff
 
 export default function HowToUse() {
     return (

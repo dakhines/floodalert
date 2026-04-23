@@ -6,11 +6,6 @@ const items = [
     { to: "/locations", label: "Locations", Icon: MapPin },
     { to: "/updates", label: "Updates", Icon: Bell },
     { to: "/settings", label: "Profile", Icon: User },
-
-    //{ to: "/home", Icon: Home },
-    //{ to: "/locations", Icon: MapPin },
-    //{ to: "/updates", Icon: Bell },
-    //{ to: "/settings", Icon: User },
 ];
 
 export default function BottomNav() {
@@ -22,10 +17,9 @@ export default function BottomNav() {
                         key={item.to}
                         to={item.to}
                         className={({ isActive }) =>
-                            `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
-                                isActive
-                                    ? "bg-sky-100 text-sky-700"
-                                    : "text-slate-500 hover:bg-slate-100"
+                            `flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${isActive
+                                ? "bg-sky-100 text-sky-700"
+                                : "text-slate-500 hover:bg-slate-100"
                             }`
                         }
                     >

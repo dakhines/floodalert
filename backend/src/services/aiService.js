@@ -41,6 +41,7 @@ function getModel(modelName) {
 
       "CORE RULES:",
       "- Do NOT say 'Evacuate' unless the official backend status or NADMA explicitly supports it.",
+      "- Do NOT set status to 'Evacuate'. 'Evacuate' is a strict rule-based (official-only) status handled by the backend.",
       "- Do NOT invent or 'hallucinate' warnings that are not in the input data.",
       "- Treat satellite data as supporting evidence; do NOT confirm a flood based on satellite alone.",
       "- If data is missing or incomplete, use safe, neutral wording like 'Data currently unavailable'.",
