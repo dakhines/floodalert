@@ -1151,6 +1151,52 @@ function chooseNearbyRiskContext(estimate, nearestStation, stations) {
   return final;
 }
 
+function chooseDistrictFallbackRiskContext(
+  estimate,
+  nearestStation,
+  stations,
+  options = {}
+) {
+  const { coordinateCoverage = false } = options;
+  const final = {
+    status: estimate.status,
+    action: estimate.action,
+    reason: estimate.reason,
+  };
+
+  if (!nearestStation) {
+    return final;
+  }
+
+  if (estimate.status === "Flood Confirmed") {
+    return final;
+  }
+
+  const elevatedStations = stations.filter(
+    (item) => getRiskScore(item.status) > getRiskScore("Safe")
+  );
+
+  if (getRiskScore(nearestStation.status) <= getRiskScore("Safe")) {
+    return final;
+  }
+
+  final.status = "Risk Rising";
+  final.action = "Prepare essentials and monitor updates";
+
+  if (estimate.status === "Risk Rising") {
+    final.reason = coordinateCoverage
+      ? `No direct JPS station is linked to this area. Supporting alerts already show concern, and ${elevatedStations.length || 1} district station${elevatedStations.length === 1 ? "" : "s"} are elevated. Because station coordinates are incomplete here, the area is capped at Risk Rising.`
+      : `No direct JPS station is linked to this area. Supporting alerts show concern, and nearby district JPS monitoring also shows elevated readings, so the area is marked Risk Rising.`;
+    return final;
+  }
+
+  final.reason = coordinateCoverage
+    ? `No direct JPS station is linked to this area. This city has location coverage, but the nearest-station map is incomplete here, so elevated district JPS readings are used as backup context only. The area is capped at Risk Rising instead of inheriting the full district status.`
+    : `No direct JPS station is linked to this area. Nearby district JPS monitoring shows elevated readings, so the area is marked Risk Rising as a precaution.`;
+
+  return final;
+}
+
 function estimateRiskFromAlerts(alerts) {
   const { weather, officialNotice, publicInfobanjir } = alerts;
   const relevantInfobanjirText = [
@@ -1256,9 +1302,17 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
     state,
     rawStations
   );
-  const districtNearbyContext =
-    coordinateNearbyContext || findDistrictNearbyStations(city, district, state, rawStations);
-  const nearbyMatchContext = districtNearbyContext;
+  const districtNearbyContext = findDistrictNearbyStations(
+    city,
+    district,
+    state,
+    rawStations
+  );
+  const hasCoordinateCoverage = Boolean(coordinateNearbyContext?.hasCoverage);
+  const hasCoordinateStationCoverage = Boolean(coordinateNearbyContext?.nearestStation);
+  const nearbyMatchContext = hasCoordinateStationCoverage
+    ? coordinateNearbyContext
+    : districtNearbyContext;
   const nearbyMatches = nearbyMatchContext?.nearbyMatches || [];
   const nearestStation = nearbyMatchContext?.nearestStation || null;
   const highestNearby = nearbyMatches
@@ -1324,23 +1378,20 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
   const nearbyContextSummary = hasNearbyJpsData
     ? nearbyMatchContext?.mode === "coordinates"
       ? `${stations.length} coordinate-matched station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station is ${nearestStation?.stationName || "-"} at ${nearestStation?.distanceKm ?? "-"} km with status ${nearestStation?.status || highestNearby.status}.`
+      : hasCoordinateCoverage
+        ? `${stations.length} district station${stations.length > 1 ? "s" : ""} monitored as backup context after checking rain and official alerts first. City coordinates exist, but nearby station coordinate coverage is incomplete, so the area is capped using district JPS support.`
       : `${stations.length} nearby district station${stations.length > 1 ? "s" : ""} monitored after checking rain and official alerts first. Nearest station status is ${nearestStation?.status || highestNearby.status}.`
     : estimate.reason;
 
   const finalDecision =
-    nearbyMatchContext?.mode === "coordinates"
+    hasCoordinateStationCoverage
       ? chooseNearbyRiskContext(estimate, nearestStation, stations)
-      : {
-          status: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
-            ? nearestStation.status
-            : estimate.status,
-          action: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
-            ? nearestStation.action
-            : estimate.action,
-          reason: nearestStation && getRiskScore(nearestStation.status) > getRiskScore(estimate.status)
-            ? `No direct JPS station is linked to this area. After checking rain and official alerts first, the nearest monitored station shows ${nearestStation.status}, which raises local concern.`
-            : estimate.reason,
-        };
+      : chooseDistrictFallbackRiskContext(
+          estimate,
+          nearestStation,
+          stations,
+          { coordinateCoverage: hasCoordinateCoverage }
+        );
 
   const finalStatus = finalDecision.status;
   const finalAction = finalDecision.action;
@@ -1355,6 +1406,8 @@ function computeCityRisk(city, district, state, rawStations, alerts) {
   const sourceNote = nearbyMatches.length > 0
     ? nearbyMatchContext?.mode === "coordinates"
       ? "JPS water-level readings are the main flood signal. Nearby stations were selected using city-to-station coordinates for areas without a direct station."
+      : hasCoordinateCoverage
+        ? "JPS water-level readings are the main flood signal. This city has coordinates, but station-coordinate coverage is incomplete here, so elevated district stations are used as capped backup context."
       : "JPS water-level readings are the main flood signal. Nearby district stations are supporting context for areas without a direct station."
     : hasStateJpsData
       ? "JPS water-level data exists for this state. This area has no linked station, so weather and official alerts are supporting context only."
