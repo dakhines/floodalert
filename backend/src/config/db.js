@@ -1,3 +1,4 @@
+// MongoDB connection helper (Atlas or local). Keeps backend routes stable.
 const mongoose = require("mongoose");
 
 const DEFAULT_MONGODB_URI = "mongodb://127.0.0.1:27017/floodalert";

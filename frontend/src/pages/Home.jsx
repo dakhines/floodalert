@@ -1,3 +1,4 @@
+// Home page: shows the selected/default location status + AI summary.
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import FloodCard from "../components/FloodCard";

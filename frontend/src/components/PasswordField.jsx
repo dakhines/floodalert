@@ -1,3 +1,4 @@
+// Password input with show/hide toggle.
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 

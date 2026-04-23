@@ -1,3 +1,4 @@
+// Auth service: real logic for signup/login/password + profile changes.
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const PendingSignup = require("../models/PendingSignup");

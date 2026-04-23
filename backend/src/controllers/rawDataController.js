@@ -1,3 +1,4 @@
+// Raw data controller (mostly for debugging / internal checks).
 const {
   getAllRawData,
   getRawDataByState,

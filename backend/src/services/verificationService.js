@@ -1,3 +1,4 @@
+// Verification helper: password hashing and small security checks.
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const VerificationCode = require("../models/VerificationCode");

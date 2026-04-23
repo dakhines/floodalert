@@ -1,3 +1,4 @@
+// Auth provider: keeps track of the current user and auth actions (login/signup/reset/delete).
 import { useState } from "react";
 import {
     deleteUserAccount,

@@ -1,3 +1,4 @@
+// Satellite helper: extra supporting signal (never the only proof of a flood).
 const axios = require("axios");
 const fs = require("fs");
 

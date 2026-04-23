@@ -1,3 +1,4 @@
+// How To Use page (includes demo video + steps).
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";

@@ -1,3 +1,4 @@
+// Forgot Password page: request verification code.
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";

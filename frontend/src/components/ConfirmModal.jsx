@@ -1,3 +1,4 @@
+// Simple "Are you sure?" pop up modal.
 export default function ConfirmModal({
     title,
     message,

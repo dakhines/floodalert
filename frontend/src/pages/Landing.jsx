@@ -1,3 +1,4 @@
+// Landing page: first screen before login/signup.
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import AppShell from "../components/AppShell";

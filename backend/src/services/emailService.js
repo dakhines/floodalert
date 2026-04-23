@@ -1,3 +1,4 @@
+// Email service: sends verification codes via Nodemailer.
 const nodemailer = require("nodemailer");
 
 function getTransporter() {

@@ -1,3 +1,4 @@
+// Report model (MongoDB): stores issue reports from users.
 const mongoose = require("mongoose");
 
 const reportSchema = new mongoose.Schema(

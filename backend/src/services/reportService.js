@@ -1,3 +1,4 @@
+// Report service: writes user reports to MongoDB.
 const Report = require("../models/Report");
 
 function normalize(value) {

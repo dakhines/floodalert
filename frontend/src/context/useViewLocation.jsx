@@ -1,3 +1,4 @@
+// Small hook for the "viewing location" feature (temporary preview).
 import { useContext } from "react";
 import { ViewLocationContext } from "./ViewLocationContextValue";
 

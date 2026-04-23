@@ -1,3 +1,4 @@
+// Bottom navigation bar (fixed at the bottom like a mobile app).
 import { NavLink } from "react-router-dom";
 import { Bell, Home, MapPin, User } from "lucide-react";
 

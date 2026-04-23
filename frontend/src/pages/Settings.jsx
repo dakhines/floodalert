@@ -1,3 +1,4 @@
+// Settings page: profile + links to other settings screens.
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../context/useAuth";

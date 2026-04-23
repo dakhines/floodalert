@@ -1,3 +1,4 @@
+// Handles profile image preview + upload (UI only).
 import { useRef, useState } from "react";
 import { User, X } from "lucide-react";
 

@@ -1,3 +1,4 @@
+// Signup page: create account + verify email code.
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";

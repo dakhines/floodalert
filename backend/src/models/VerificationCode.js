@@ -1,3 +1,4 @@
+// Verification code model (MongoDB): stores short-lived codes for email/password flows.
 const mongoose = require("mongoose");
 
 const verificationCodeSchema = new mongoose.Schema(

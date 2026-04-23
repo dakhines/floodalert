@@ -1,3 +1,4 @@
+// Updates page: shows latest updates and sources.
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/useAuth";
 import { useViewLocation } from "../context/useViewLocation";

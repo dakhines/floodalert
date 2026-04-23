@@ -1,3 +1,4 @@
+// Backend entrypoint. Loads env vars, connects MongoDB, then starts Express.
 const dotenv = require("dotenv");
 const app = require("./app");
 const { connectDb } = require("./config/db");

@@ -1,3 +1,4 @@
+// Auth controller: takes request inputs and calls authService functions.
 const {
   checkEmail,
   deleteUser,

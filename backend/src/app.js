@@ -1,3 +1,5 @@
+// FloodAlert backend main app setup (Express + routes).
+// This file wires up middleware and API endpoints.
 const express = require("express");
 const cors = require("cors");
 

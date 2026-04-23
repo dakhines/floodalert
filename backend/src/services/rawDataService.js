@@ -1,3 +1,4 @@
+// Raw data service: pulls from official sources and computes a simple status + action.
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { getLocationAliases } = require("../data/locationAliases");
@@ -25,6 +26,7 @@ const OPTIONAL_INFOBANJIR_SOURCES = new Set(["siren"]);
 const NADMA_DISASTER_INFO_URL = "https://www.nadma.gov.my/bm/#informasi-bencana";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const WEATHER_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1000;
+// Siren telemetry is a strong official signal. We cache it so we don't spam Infobanjir.
 const SIREN_CACHE_TTL_MS = 5 * 60 * 1000;
 const SIREN_TELEMETRY_URL =
   "https://publicinfobanjir.water.gov.my/cerapan/siren/siren-data/page-siren-telemetri/";
@@ -119,6 +121,12 @@ function getRelevantText(text, terms, maxLength = 260) {
   return normalizedText.slice(start, start + maxLength).trim();
 }
 
+// JPS water level rules:
+// Safe -> below alert threshold
+// Risk Rising -> reached alert threshold
+// Warning -> reached warning threshold
+// Flood Confirmed -> reached danger threshold
+// Evacuate -> official-only (not from JPS water level)
 function mapStatusFromThresholds(waterLevel, thresholds) {
   if (
     thresholds.danger !== null &&
@@ -148,6 +156,7 @@ function mapStatusFromThresholds(waterLevel, thresholds) {
 }
 
 function mapAction(status) {
+  // Quick user instruction based on the final status.
   if (status === "Evacuate") return "Evacuate immediately";
   if (status === "Flood Confirmed") return "Evacuate immediately";
   if (status === "Risk Rising") return "Prepare essentials and monitor updates";
@@ -291,6 +300,7 @@ function mapSirenRisk(statusText) {
   return { level: 1, label: compactText(statusText) };
 }
 
+// Infobanjir siren telemetry is an HTML table. We scrape it into rows.
 function parseSirenTelemetryRows(html) {
   const $ = cheerio.load(html || "");
   const rows = [];
@@ -343,6 +353,8 @@ async function fetchSirenTelemetryRows(state, district = "ALL", station = "ALL")
 }
 
 async function fetchSirenTelemetryContext(state, district, location) {
+  // We try to match siren stations to the user's district/location.
+  // If nothing matches directly, we fall back to "strongest in district".
   const rows = await fetchSirenTelemetryRows(state, "ALL", "ALL");
   if (rows.length === 0) {
     return null;
@@ -833,6 +845,7 @@ function unique(values) {
 }
 
 function getRiskScore(status) {
+  // Helps us sort stations/statuses (bigger number = more dangerous).
   const scores = { Evacuate: 4, "Flood Confirmed": 3, Warning: 2, "Risk Rising": 1, Safe: 0 };
   return scores[status] ?? 0;
 }
@@ -1207,6 +1220,8 @@ function matchesAlertContext(text, context = {}) {
 }
 
 function estimateRiskFromAlerts(alerts, context = {}) {
+  // This function is our "official alerts brain".
+  // It decides if we should escalate even when we don't have a direct JPS station match.
   const { weather, officialNotice, publicInfobanjir } = alerts;
   const relevantInfobanjirText = [
     publicInfobanjir?.floodAlert?.hasRelevantText
@@ -1373,6 +1388,11 @@ function getContextOnlyRisk(alerts, nearbyMatches = [], context = {}) {
   };
 }
 
+// Main decision flow for one area:
+// 1) Try direct JPS station match for this area name.
+// 2) If no direct match, check nearby/district stations as backup context.
+// 3) Use official alerts + weather + siren telemetry to decide if we should escalate.
+// 4) Return a clean result for the UI (status/action/reason/latestUpdate).
 function computeCityRisk(city, district, state, rawStations, alerts) {
   const cityTargets = unique([
     city,

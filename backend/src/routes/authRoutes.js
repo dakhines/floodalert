@@ -1,3 +1,4 @@
+// Auth routes: connects auth endpoints to controller handlers.
 const express = require("express");
 const {
   login,

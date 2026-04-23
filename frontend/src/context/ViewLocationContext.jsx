@@ -1,3 +1,4 @@
+// Viewing location provider: lets users preview another area without changing their saved default.
 import { useState } from "react";
 import { ViewLocationContext } from "./ViewLocationContextValue";
 

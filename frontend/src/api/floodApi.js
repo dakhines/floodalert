@@ -1,7 +1,11 @@
+// Flood/location API calls to the backend (with caching so the UI feels fast).
 import { formatDisplayTime } from "../utils/floodStatus";
 
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+// Simple in-memory caches so we don't spam the backend when users click around.
+// This makes the app feel faster on mobile.
 const locationCache = new Map();
 const locationsCache = new Map();
 const inFlightRequests = new Map();

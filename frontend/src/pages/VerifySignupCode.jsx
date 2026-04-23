@@ -1,3 +1,4 @@
+// Verify signup code page (email verification).
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";

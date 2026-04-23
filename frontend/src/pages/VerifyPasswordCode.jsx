@@ -1,3 +1,4 @@
+// Verify password reset code page (OTP style).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";

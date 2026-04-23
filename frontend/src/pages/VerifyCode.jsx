@@ -1,3 +1,4 @@
+// Verify Code page (password reset code).
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../components/AppShell";

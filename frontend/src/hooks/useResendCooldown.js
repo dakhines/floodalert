@@ -1,3 +1,4 @@
+// Hook to block "resend code" spam (cooldown timer).
 import { useEffect, useState } from "react";
 
 function getStoredRemainingSeconds(storageKey) {

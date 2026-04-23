@@ -1,3 +1,4 @@
+// Auth API calls (signup/login/profile/password flows) to the backend.
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 

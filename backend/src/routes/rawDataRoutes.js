@@ -1,3 +1,4 @@
+// Raw data routes: mainly for debugging/inspection.
 const express = require("express");
 const { fetchRawData } = require("../controllers/rawDataController");
 

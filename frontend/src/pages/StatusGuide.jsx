@@ -1,3 +1,4 @@
+// Status Guide page: explains what each status means.
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";
 import BottomNav from "../components/BottomNav";

@@ -1,3 +1,4 @@
+// Legacy location service (kept for older calls).
 const mockLocations = require("../data/mockLocations.json");
 const { getRawDataByCity } = require("./rawDataService");
 const { analyzeLocation } = require("./aiService");

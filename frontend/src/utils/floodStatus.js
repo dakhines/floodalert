@@ -1,3 +1,4 @@
+// Status styling helpers (maps backend status text to badge colors).
 export const STATUS_STYLES = {
     Safe: "bg-green-600 border-green-900/25 text-white",
     "Risk Rising": "bg-yellow-400 border-yellow-700/25 text-slate-950",

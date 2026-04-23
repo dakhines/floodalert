@@ -1,3 +1,4 @@
+// OTP input for verification codes (the short code you type).
 import { useRef } from "react";
 
 export default function OTPInput({ value, onChange, length = 4 }) {

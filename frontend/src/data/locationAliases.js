@@ -1,3 +1,4 @@
+// Location aliases: extra names we accept so one area can match multiple official spellings.
 const LOCATION_DATA_ALIASES = {
     "Johor Bahru City": ["Johor Bahru City", "Johor Bahru"],
     "Iskandar Puteri": ["Iskandar Puteri", "Pulai", "Johor Bahru", "Sungai Skudai", "Sg. Skudai"],

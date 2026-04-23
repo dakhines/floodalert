@@ -1,3 +1,4 @@
+// Pending signup model (MongoDB): used before email verification is completed.
 const mongoose = require("mongoose");
 
 const pendingSignupSchema = new mongoose.Schema(

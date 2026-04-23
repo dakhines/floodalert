@@ -1,3 +1,4 @@
+// User model (MongoDB): stores login + default location info.
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(

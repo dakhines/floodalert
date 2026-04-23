@@ -1,3 +1,4 @@
+// Location controller: returns live location status (rule-based), and optionally adds AI summary.
 const {
     getRawDataByState,
     getRawDataByCity,

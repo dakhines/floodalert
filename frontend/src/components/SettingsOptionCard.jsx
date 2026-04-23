@@ -1,3 +1,4 @@
+// Small reusable card for a settings option (clickable row).
 import { Link } from "react-router-dom";
 
 export default function SettingsOptionCard({ to, children }) {

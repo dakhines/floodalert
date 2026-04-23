@@ -1,3 +1,4 @@
+// AppShell is the phone-like container (max width + padding + background).
 export default function AppShell({ children, className = "" }) {
     return (
         <main className="min-h-screen bg-slate-200 text-slate-950">

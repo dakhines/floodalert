@@ -1,3 +1,4 @@
+// Shows the main status card: status + action + reason.
 import { getStatusClasses } from "../utils/floodStatus";
 
 export default function FloodCard({ item }) {

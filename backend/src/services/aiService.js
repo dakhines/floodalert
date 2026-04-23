@@ -1,3 +1,5 @@
+// Gemini AI helper: turns backend context into a short, calm JSON summary.
+// Important: "Evacuate" is strict rule-based (official-only), not decided by AI.
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const DEFAULT_MODEL_CANDIDATES = [

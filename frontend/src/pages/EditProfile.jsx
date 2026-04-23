@@ -1,3 +1,4 @@
+// Edit Profile page (default location/state/district).
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";

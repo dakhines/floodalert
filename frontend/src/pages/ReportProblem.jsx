@@ -1,3 +1,4 @@
+// Report Problem page: user submits bug/issue report.
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../components/AppShell";

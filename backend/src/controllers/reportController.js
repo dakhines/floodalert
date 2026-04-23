@@ -1,3 +1,4 @@
+// Report controller: saves user-submitted reports to MongoDB.
 const { createReport } = require("../services/reportService");
 
 function handleError(res, error) {
